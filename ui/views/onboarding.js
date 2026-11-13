@@ -90,8 +90,8 @@ export async function show(root) {
   refreshStart();
 
   mount(root, h('div', { class: 'onboard' }, h('div', { class: 'onboard-card' },
-    h('h1', { class: 'onboard-title' }, 'A gym for thinking.'),
-    h('p', { class: 'onboard-lead' }, 'Timed practice slightly above your level, virtual contests, and a record of every idea you missed. Start by connecting your Codeforces handle: verdicts are read from there.'),
+    h('h1', { class: 'onboard-title' }, 'CP Gym'),
+    h('p', { class: 'onboard-lead' }, 'Connect your Codeforces handle to start.'),
     h('form', { class: 'row', onSubmit: connect, style: { alignItems: 'flex-end' } }, h('div', { style: { flex: 1 } }, field('Codeforces handle', handle)), connectBtn),
     h('div', { style: { marginTop: '14px' } }, found),
     h('div', { style: { marginTop: '8px' } }, status),

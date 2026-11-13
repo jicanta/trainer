@@ -19,12 +19,11 @@ async function showSetup(root) {
 
   async function renderLadder() {
     if (kind === 'round') {
-      return mount(ladder, h('p', { class: 'muted', style: { maxWidth: '64ch' } }, `A real past round you have never touched (Div. 2 or Educational around your level), first ${count} problems, in its original order.`));
+      return mount(ladder, h('p', { class: 'muted', style: { maxWidth: '64ch' } }, `A past round you have not touched, first ${count} problems in their original order.`));
     }
     try {
       const plan = await gym.call('contest.plan', { count });
-      mount(ladder, h('div', { class: 'ladder' }, plan.ratings.map((r, i) => h('div', { class: 'ladder-step' }, h('strong', null, r), h('span', null, String.fromCharCode(65 + i))))),
-        h('p', { class: 'muted', style: { marginTop: '10px', maxWidth: '64ch' } }, `Built around your level (${plan.level}): two you should solve, one coin flip, the rest a reach. If you are sure you would solve everything, it is not a contest.`));
+      mount(ladder, h('div', { class: 'ladder' }, plan.ratings.map((r, i) => h('div', { class: 'ladder-step' }, h('strong', null, r), h('span', null, String.fromCharCode(65 + i))))));
     } catch (e) { fail(e); }
   }
 
@@ -38,8 +37,7 @@ async function showSetup(root) {
 
   const past = await gym.call('contest.list');
   mount(root, h('div', { class: 'page' },
-    h('header', { class: 'page-head' }, h('div', null, h('h1', { class: 'page-title' }, 'Virtual contest'),
-      h('p', { class: 'page-sub' }, 'Practice teaches you to solve. Contests teach you to do it fast and under pressure. Keep both.'))),
+    h('header', { class: 'page-head' }, h('h1', { class: 'page-title' }, 'Virtual contest')),
     blocked ? h('div', { class: 'notice warm', style: { marginBottom: '18px' } }, h('div', { class: 'notice-title' }, `You have a problem open: ${b.active.attempt.name}`), 'Finish or park it before starting a contest.',
       h('div', { class: 'notice-actions' }, button('Resume', { small: true, onClick: () => navigate('solve') }))) : null,
     h('section', { class: 'card' },
@@ -236,7 +234,7 @@ async function showResults(root, id) {
 
   const panel = chatPanel({
     scope: 'contest', scopeId: id, placeholder: 'Ask about this contest',
-    empty: () => h('div', { class: 'chat-empty' }, icon('chat', 22), h('p', null, 'Pacing, order, where the time went, what to upsolve first.'),
+    empty: () => h('div', { class: 'chat-empty' }, icon('chat', 22),
       button('Debrief with coach', { kind: 'primary', onClick: async () => { try { panel.begin(await gym.call('coach.contest', { runId: id, text: '' })); } catch (e) { fail(e); } } })),
     send: (text) => gym.call('coach.contest', { runId: id, text }),
   });

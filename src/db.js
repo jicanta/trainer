@@ -162,6 +162,7 @@ const SETTING_DEFAULTS = {
   focusUntil: 0,
   habit: '',              // the one thinking habit from the last coach review
   focusLayout: true,      // hide Codeforces chrome around the statement
+  theme: 'light',         // light | cream | dark
 };
 
 function allSettings(db) {

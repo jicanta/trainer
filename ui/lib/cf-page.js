@@ -16,6 +16,11 @@ export const FOCUS_CSS = `
   .problem-statement { font-size: 1.02em; }
 `;
 
+// The page is inverted as a whole in the dark theme (see styles.css); pictures are turned back.
+export const DARK_CSS = `
+  img, video, canvas, svg image { filter: invert(1) hue-rotate(180deg) !important; }
+`;
+
 const origin = () => (state.boot && state.boot.meta && state.boot.meta.cfOrigin) || 'https://codeforces.com';
 export const problemUrl = (contestId, index) => `${origin()}/problemset/problem/${contestId}/${index}?locale=en`;
 export const submitUrl = (contestId, index) => `${origin()}/contest/${contestId}/submit/${index}?locale=en`;
@@ -107,7 +112,10 @@ export function attachCodeforces(view, { pid, getFocus, onInfo, onLoading }) {
   view.addEventListener('dom-ready', async () => {
     ready = true;
     focusKey = null;
-    try { await view.insertCSS(TAGS_CSS); } catch { /* not ready */ }
+    try {
+      await view.insertCSS(TAGS_CSS);
+      if (document.documentElement.dataset.theme === 'dark') await view.insertCSS(DARK_CSS);
+    } catch { /* not ready */ }
     await applyFocus();
     if (!isProblemPage(view.getURL())) return;
     try {

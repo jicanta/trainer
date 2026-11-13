@@ -6,6 +6,7 @@
   "description": "Personal competitive programming gym: timed practice, virtual contests, insights and a local Claude coach.",
   "main": "main.js",
   "private": true,
+  "repository": "github:jicanta/trainer",
   "engines": { "node": ">=22.12" },
   "scripts": {
     "start": "node scripts/start.js",

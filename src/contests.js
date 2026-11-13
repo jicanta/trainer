@@ -120,7 +120,7 @@ class Contests {
         .sort((x, y) => x.rating - y.rating).slice(0, 2).forEach((a) => {
           if (this.db.get(`SELECT id FROM queue WHERE pid = ? AND done_at IS NULL`, a.pid)) return;
           this.db.run(`INSERT INTO queue(pid, kind, due_at, reason, created_at, source_attempt_id) VALUES(?, 'upsolve', ?, ?, ?, ?)`,
-            a.pid, t, 'Unsolved in your contest. Upsolving it is how the next level becomes routine.', t, a.id);
+            a.pid, t, 'Unsolved in your contest.', t, a.id);
         });
     });
     const view = this.view(this.db.get('SELECT * FROM contest_runs WHERE id = ?', runId));

@@ -176,7 +176,7 @@ export async function show(root) {
     scope: 'attempt', scopeId: a.id,
     placeholder: 'Ask the coach',
     empty: () => h('div', { class: 'chat-empty' }, icon('chat', 22),
-      h('p', null, 'Chat is free: until you unlock a hint, the coach only clarifies the statement and asks questions. Hints cost credit and are tracked.')),
+      h('p', null, 'Chat is free. Hints cost credit.')),
     send: async (text) => { await saveNotesNow(); return gym.call('coach.attempt', { attemptId: a.id, text }); },
     onDone: (p) => { if (p.attempt && !done) setAttempt(p.attempt); },
   });

@@ -168,7 +168,7 @@ function overview(db, settings, now = Date.now()) {
   if (dueUpsolve.length) {
     suggestion = { kind: 'queue', queueId: dueUpsolve[0].id, title: `Upsolve ${dueUpsolve[0].name}`, detail: 'You have seen how it is solved. Implement it yourself before taking on anything new.' };
   } else if (minutes >= settings.contestMinutes && (daysSinceContest === null || daysSinceContest >= 6)) {
-    suggestion = { kind: 'contest', title: 'Virtual contest', detail: daysSinceContest === null ? 'No contest logged yet. Contests train speed and nerves, which practice alone does not.' : `Your last contest was ${daysSinceContest} days ago.` };
+    suggestion = { kind: 'contest', title: 'Virtual contest', detail: daysSinceContest === null ? 'No contest logged yet.' : `Your last contest was ${daysSinceContest} days ago.` };
   } else if (dueOther.length) {
     const q = dueOther[0];
     suggestion = { kind: 'queue', queueId: q.id, title: `${q.kind === 'redo' ? 'Re-solve' : 'Return to'} ${q.name}`, detail: q.kind === 'redo' ? 'Check that the idea stuck: solve it again without notes.' : 'You parked this a while ago. Try it with fresh eyes.' };

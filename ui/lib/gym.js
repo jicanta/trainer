@@ -29,13 +29,23 @@ export const gym = {
 // Boot data: settings, Codeforces user, active session, coach status, static metadata.
 export const state = { boot: null };
 
+// The theme is mirrored in localStorage so the first paint already has it.
+export function applyTheme(name) {
+  const theme = ['cream', 'dark'].includes(name) ? name : 'light';
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem('theme', theme); } catch { /* storage unavailable */ }
+}
+try { applyTheme(localStorage.getItem('theme')); } catch { applyTheme('light'); }
+
 export async function refreshBoot() {
   state.boot = await gym.call('boot');
+  applyTheme(state.boot.settings.theme);
   return state.boot;
 }
 
 export async function saveSettings(patch) {
   state.boot.settings = await gym.call('settings.set', patch);
+  applyTheme(state.boot.settings.theme);
   return state.boot.settings;
 }
 

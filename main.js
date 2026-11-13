@@ -28,6 +28,8 @@ const isCodeforces = (url) => {
 };
 const isAllowedInView = (url) => isCodeforces(url) || (/^https:/.test(url) && AUTH_HOSTS.has(hostOf(url)));
 
+const WINDOW_BG = { light: '#FBFBFA', cream: '#F6F0E4', dark: '#141413' };
+
 let win = null;
 let db = null;
 let watcher = null;
@@ -39,7 +41,7 @@ const emit = (type, payload) => {
 function createWindow() {
   win = new BrowserWindow({
     width: 1480, height: 940, minWidth: 1080, minHeight: 680,
-    backgroundColor: '#FBFBFA', autoHideMenuBar: true, show: false, title: 'CP Gym',
+    backgroundColor: WINDOW_BG[db ? allSettings(db).theme : 'light'] || WINDOW_BG.light, autoHideMenuBar: true, show: false, title: 'CP Gym',
     icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

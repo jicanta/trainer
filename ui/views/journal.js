@@ -88,7 +88,7 @@ export async function show(root, params = {}) {
     try {
       const r = await gym.call('attempt.list', { q: filters.q || undefined, outcome: filters.outcome || undefined, mode: filters.mode || undefined, tag: filters.tag || undefined, limit: 200 });
       countEl.textContent = `${r.total} ${r.total === 1 ? 'attempt' : 'attempts'}`;
-      if (!r.items.length) return mount(tableEl, h('p', { class: 'empty', style: { padding: '20px' } }, 'Nothing here yet. Finished problems land in the journal with their idea and what you missed.'));
+      if (!r.items.length) return mount(tableEl, h('p', { class: 'empty', style: { padding: '20px' } }, 'Nothing here yet.'));
       mount(tableEl, h('div', { class: 'table-wrap' }, h('table', { class: 'table' },
         h('thead', null, h('tr', null, ['Date', 'Rating', 'Problem', 'Result', 'Time', 'Idea or lesson'].map((t) => h('th', null, t)))),
         h('tbody', null, r.items.map((a) => h('tr', { class: 'clickable', onClick: () => navigate('journal', { id: a.id }) },
@@ -106,8 +106,7 @@ export async function show(root, params = {}) {
   const select = (key, options) => h('select', { class: 'select', style: { width: '170px' }, onChange: (e) => { filters[key] = e.target.value; load(); } }, options.map(([v, label]) => h('option', { value: v }, label)));
 
   mount(root, h('div', { class: 'page' },
-    h('header', { class: 'page-head' }, h('div', null, h('h1', { class: 'page-title' }, 'Journal'),
-      h('p', { class: 'page-sub' }, 'The ideas you found, the ones you missed, and what each problem taught you.')), countEl),
+    h('header', { class: 'page-head' }, h('h1', { class: 'page-title' }, 'Journal'), countEl),
     h('div', { class: 'controls' }, search,
       select('outcome', [['', 'All results'], ...Object.entries(OUTCOMES).filter(([k]) => k !== 'active' && k !== 'abandoned').map(([k, v]) => [k, v.label])]),
       select('mode', [['', 'All modes'], ...Object.entries(MODES)]),

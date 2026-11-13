@@ -50,7 +50,7 @@ export async function show(root, params = {}) {
   const panel = chatPanel({
     scope: 'attempt', scopeId: a.id,
     placeholder: open ? 'Discuss the problem with the coach' : 'Ask the coach (no spoilers while parked)',
-    empty: () => h('div', { class: 'chat-empty' }, icon('chat', 22), h('p', null, open ? 'The attempt is over, so the coach can discuss the solution freely: other approaches, why your idea failed, what to practice.' : 'This problem is parked. The coach will not spoil it.')),
+    empty: () => h('div', { class: 'chat-empty' }, icon('chat', 22), open ? null : h('p', null, 'This problem is parked. The coach will not spoil it.')),
     send: (text) => gym.call('coach.attempt', { attemptId: a.id, text }),
   });
 
@@ -74,7 +74,7 @@ export async function show(root, params = {}) {
         h('div', { class: 'stack' },
           field('Key idea', keyIdea),
           field(solvedClean ? 'What could have gone better' : 'What I missed', missed),
-          field('Takeaway', takeaway, 'A habit or pattern you can reuse, not a restatement of this problem.'),
+          field('Takeaway', takeaway),
           h('div', { style: { maxWidth: '360px' } }, field('What went wrong', mistake)),
           h('div', { class: 'row', style: { marginTop: '6px' } },
             button('Save reflection', { kind: 'primary', onClick: save }), draftBtn, h('span', { class: 'spacer' }),

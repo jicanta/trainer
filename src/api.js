@@ -8,13 +8,14 @@ const recommend = require('./recommend');
 const stats = require('./stats');
 const { HINT_NAMES, HINT_SCORE, clamp } = require('./model');
 const { MIX_OFFSETS, BANDS } = require('./recommend');
+const { sendFeedback } = require('./feedback');
 
 const NUMBERS = {
   levelBase: [800, 3500], targetRating: [800, 4000], minYear: [2010, 2100], minSolved: [0, 100000], sessionMinutes: [15, 480],
   budgetMinutes: [10, 240], stuckMinutes: [5, 120], checkinMinutes: [0, 60], contestMinutes: [20, 300], contestProblems: [4, 6],
   monthlyGoal: [1, 300], focusUntil: [0, Number.MAX_SAFE_INTEGER],
 };
-const CHOICES = { difficulty: Object.keys(BANDS), coachModel: ['default', 'opus', 'sonnet', 'haiku', 'fable'], coachBackend: ['claude', 'local'] };
+const CHOICES = { difficulty: Object.keys(BANDS), coachModel: ['default', 'opus', 'sonnet', 'haiku', 'fable'], coachBackend: ['claude', 'local'], theme: ['light', 'cream', 'dark'] };
 
 function coerce(key, value) {
   if (key in NUMBERS) {
@@ -208,6 +209,7 @@ function createApi({ db, cf, sessions, contests, watcher, coach, emit, dataDir, 
       if (!/^https?:\/\//i.test(String(url || ''))) throw new Error('Only web links can be opened.');
       return openExternal ? openExternal(url) : false;
     },
+    'feedback.send'({ kind, text, view }) { return sendFeedback({ kind, text, view, version }); },
     'app.openDataDir'() { return openPath ? openPath(dataDir) : false; },
   };
   return api;

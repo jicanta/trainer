@@ -18,14 +18,14 @@ export async function show(root) {
   panel = chatPanel({
     scope: 'general', scopeId: 0, placeholder: 'Ask your coach',
     empty: () => h('div', { class: 'chat-empty' }, icon('chat', 24),
-      h('p', null, 'The coach reads your level, topics, mistakes, times and Codeforces history with every message. Ask it anything about your training.'),
       h('div', { class: 'chips' }, STARTERS.map((t) => h('button', { class: 'chip', type: 'button', onClick: () => starter(t) }, t)))),
     send: (text) => gym.call('coach.general', { text }),
   });
   mount(root, h('div', { class: 'coach-page' },
     h('header', { class: 'page-head', style: { marginBottom: '20px' } },
       h('div', null, h('h1', { class: 'page-title' }, 'Coach'),
-        h('p', { class: 'page-sub' }, coachOk ? `${b.coach.backend === 'local' ? `A local model (${b.coach.model}) at ${b.coach.url}` : `Your local Claude Code (${b.coach.model === 'default' ? 'default model' : b.coach.model})`}. Hints on a problem live in the solve view, where they are tracked.` : 'Claude Code was not found on this machine.')),
+        !coachOk ? h('p', { class: 'page-sub' }, 'Claude Code was not found on this machine.')
+          : b.coach.backend === 'local' ? h('p', { class: 'page-sub' }, `A local model (${b.coach.model}) at ${b.coach.url}`) : null),
       h('div', { class: 'row' },
         coachOk ? null : button('Open Settings', { onClick: () => navigate('settings') }),
         button('New conversation', { kind: 'ghost', iconName: 'plus', onClick: async () => {

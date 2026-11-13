@@ -2,6 +2,7 @@
 import { h, mount, icon } from './lib/dom.js';
 import { gym, state, refreshBoot, setNavigator, setImmersiveHandler, toast } from './lib/gym.js';
 import { clock } from './lib/format.js';
+import { feedbackDialog } from './lib/feedback.js';
 
 const VIEWS = {
   home: () => import('./views/home.js'),
@@ -59,6 +60,7 @@ function renderSidebar() {
       class: ['nav-item', current.route === route && 'on'], type: 'button', onClick: () => go(route),
     }, icon(ic, 17), h('span', null, label)))),
     h('div', { class: 'sidebar-foot' }, running,
+      h('button', { class: 'foot-link', type: 'button', onClick: () => feedbackDialog(current.route) }, icon('pencil', 17), h('span', null, 'Feedback')),
       h('div', { class: 'who' }, h('span', null, b.user ? b.user.handle : 'No handle'), h('strong', null, `Level ${b.level}`))));
   runningClock();
 }

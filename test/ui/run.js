@@ -17,8 +17,9 @@ const step = (name) => { steps.push(name); console.log(`\n== ${name}`); };
 (async () => {
   const cf = await fakeCf.start();
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cpgym-ui-'));
+  const ghLog = path.join(dataDir, 'gh-args.json');
   const { app, page, problems, shot } = await launch({
-    dataDir, env: { CPGYM_CF_ORIGIN: cf.origin, CPGYM_CF_API: cf.api, CPGYM_WATCH_MS: '700' },
+    dataDir, env: { CPGYM_CF_ORIGIN: cf.origin, CPGYM_CF_API: cf.api, CPGYM_WATCH_MS: '700', CPGYM_GH: path.join(__dirname, 'fake-gh.js'), CPGYM_GH_LOG: ghLog },
   });
   const call = async (method, params) => {
     const r = await page.evaluate(([m, p]) => window.gymBridge.call(m, p), [method, params]);
@@ -315,6 +316,30 @@ const step = (name) => { steps.push(name); console.log(`\n== ${name}`); };
     assert.strictEqual((await call('boot')).settings.targetRating, 2100);
     await snap('21-settings');
 
+    step('Feedback is filed as a GitHub issue');
+    await page.click('.foot-link:has-text("Feedback")');
+    await page.click('.dialog .seg-item:has-text("Suggestion")');
+    await page.fill('.dialog textarea', 'Show the streak on Today');
+    await snap('24-feedback');
+    await page.click('.dialog button[type=submit]');
+    await page.waitForSelector('.toast.good:has-text("Feedback sent")', { timeout: 10000 });
+    const ghArgs = JSON.parse(fs.readFileSync(ghLog, 'utf8'));
+    assert.deepStrictEqual(ghArgs.slice(0, 6), ['issue', 'create', '--repo', 'jicanta/trainer', '--title', 'Suggestion: Show the streak on Today']);
+    assert.match(ghArgs[7], /^Show the streak on Today\n\n---\nSent from CP Gym .*settings view/);
+    assert.deepStrictEqual(ghArgs.slice(8), ['--label', 'feedback', '--label', 'enhancement']);
+
+    step('Themes: cream and dark apply everywhere and persist');
+    for (const [label, theme] of [['Cream', 'cream'], ['Dark', 'dark']]) {
+      await page.click(`.card .seg-item:has-text("${label}")`);
+      await page.waitForFunction((t) => document.documentElement.dataset.theme === t, theme, { timeout: 8000 });
+      assert.strictEqual((await call('boot')).settings.theme, theme);
+      await snap(`25-settings-${theme}`);
+      for (const [name, sel] of [['Today', '.hero-value'], ['Practice', '.problem-row'], ['Insights', '.viz-card']]) { await nav(name, sel); await wait(400); await snap(`26-${theme}-${name.toLowerCase()}`); }
+      await nav('Settings', '.settings-grid');
+    }
+    await page.click('.card .seg-item:has-text("Light")');
+    await page.waitForFunction(() => document.documentElement.dataset.theme === 'light', null, { timeout: 8000 });
+
     step('Local model: the coach can run on an OpenAI-compatible server instead of Claude');
     const llm = await fakeLocal.start();
     try {
@@ -338,6 +363,15 @@ const step = (name) => { steps.push(name); console.log(`\n== ${name}`); };
       assert.doesNotMatch(said, /What does the data say/, 'the model\'s thinking is not shown');
       await snap('23-coach-local');
     } finally { await llm.close(); }
+
+    step('Dark theme: the embedded statement is dark too');
+    await call('settings.set', { theme: 'dark' });
+    await nav('Practice', '.problem-row');
+    await page.click('.problem-row >> nth=0 >> text=Start');
+    await page.waitForSelector('.stage-views webview', { timeout: 15000 });
+    assert.match(await page.evaluate(() => getComputedStyle(document.querySelector('.stage-views webview')).filter), /invert/);
+    await wait(1500);
+    await snap('27-dark-solve');
 
     assert.deepStrictEqual(problems, [], 'no console errors or warnings in the UI');
     console.log(`\nALL ${steps.length} UI STEPS PASSED`);

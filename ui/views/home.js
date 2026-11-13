@@ -37,7 +37,7 @@ export async function show(root) {
     h('div', { class: 'goal-ends' }, h('span', null, lo), h('span', null, `goal ${o.level.target}`)),
     h('p', { class: 'tile-note', style: { marginTop: '14px' } },
       o.cf ? `Codeforces rating ${o.cf.rating ?? 'unrated'}${o.cf.maxRating ? `, max ${o.cf.maxRating}` : ''}. ` : '',
-      o.level.n ? `Based on ${o.level.n} counted attempts.` : 'It starts moving with your first finished problem.'));
+      o.level.n ? `Based on ${o.level.n} counted attempts.` : ''));
 
   let next;
   if (active.contest) {
@@ -69,12 +69,12 @@ export async function show(root) {
       h('div', { class: 'meter', style: { marginTop: '10px' } }, h('span', { style: { width: `${goalPct * 100}%` } }))),
     h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Last virtual contest'),
       h('div', { class: 'tile-value' }, o.lastContest ? relative(o.lastContest.endedAt) : 'None yet'),
-      h('div', { class: 'tile-note' }, o.lastContest ? `Solved ${o.lastContest.solved}, performance ${o.lastContest.perf ?? '-'}` : 'Contests train speed and nerves')),
+      h('div', { class: 'tile-note' }, o.lastContest ? `Solved ${o.lastContest.solved}, performance ${o.lastContest.perf ?? '-'}` : null)),
   ];
 
   const queueList = h('div', { class: 'list' });
   const renderQueue = (items) => {
-    if (!items.length) return mount(queueList, h('p', { class: 'empty' }, 'Nothing waiting. Problems you park, fail or solve with heavy help come back here.'));
+    if (!items.length) return mount(queueList, h('p', { class: 'empty' }, 'Nothing waiting.'));
     mount(queueList, items.slice(0, 8).map((q) => h('div', { class: 'list-row' },
       h('span', { class: ['badge', q.kind === 'upsolve' ? 'blue' : q.kind === 'redo' ? 'yellow' : 'gray'] }, QUEUE_KINDS[q.kind]),
       h('div', { style: { minWidth: 0 } }, h('div', { class: 'list-title' }, q.name), h('div', { class: 'list-meta wrap' }, q.reason || '')),
@@ -94,13 +94,12 @@ export async function show(root) {
       h('div', { style: { minWidth: 0 } }, h('div', { class: 'list-title' }, a.name),
         h('div', { class: 'list-meta' }, `${MODES[a.mode]}, ${a.mode === 'contest' ? minutes(a.thinkMs) : `think ${minutes(a.thinkMs)}, code ${minutes(a.codeMs)}`}${a.reflected || a.mode === 'contest' ? '' : '. Reflection pending'}`)),
       h('div', { class: 'list-side' }, outcomeBadge(a.outcome), h('span', null, day(a.endedAt))))))
-    : h('p', { class: 'empty' }, 'Your finished problems will show up here.');
+    : h('p', { class: 'empty' }, 'Nothing yet.');
 
   const notices = [];
   if (!b.problems) notices.push(h('div', { class: 'notice warm' }, h('div', { class: 'notice-title' }, 'The problem set is not downloaded yet'), 'Practice and contests need it.',
     h('div', { class: 'notice-actions' }, button('Download now', { small: true, onClick: async (e) => { e.currentTarget.disabled = true; try { await gym.call('sync.all'); navigate('home'); } catch (err) { fail(err); } } }))));
   if (o.unreflected > 0) notices.push(h('div', { class: 'notice' }, h('div', { class: 'notice-title' }, `${o.unreflected} finished ${o.unreflected === 1 ? 'problem has' : 'problems have'} no reflection yet`),
-    'The idea and what you missed are what the insights are built from. It takes a minute, and the coach can draft it.',
     h('div', { class: 'notice-actions' }, button('Open the journal', { small: true, onClick: () => navigate('journal') }))));
   if (o.focus.length || s.habit) notices.push(h('div', { class: 'notice calm' }, h('div', { class: 'notice-title' }, 'From your last coach review'),
     o.focus.length ? `Extra weight on ${o.focus.join(', ')} for two weeks. ` : '', s.habit ? `Habit: ${s.habit}` : ''));
@@ -113,6 +112,6 @@ export async function show(root) {
         async (v) => { await saveSettings({ sessionMinutes: v }).catch(fail); navigate('home'); }))),
     notices.length ? h('div', { class: 'stack', style: { marginBottom: '16px' } }, notices) : null,
     h('div', { class: 'bento' }, levelCard, nextCard, tiles,
-      h('section', { class: 'card span-7' }, h('header', { class: 'card-head' }, h('div', null, h('h3', { class: 'card-title' }, 'Queue'), h('p', { class: 'card-sub' }, 'Upsolve first. Re-solves and parked problems return when they are due.'))), queueList),
+      h('section', { class: 'card span-7' }, h('header', { class: 'card-head' }, h('h3', { class: 'card-title' }, 'Queue')), queueList),
       h('section', { class: 'card span-5' }, h('header', { class: 'card-head' }, h('h3', { class: 'card-title' }, 'Recent'), h('button', { class: 'link-btn', type: 'button', onClick: () => navigate('journal') }, 'Journal')), recent))));
 }
