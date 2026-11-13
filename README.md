@@ -2,8 +2,8 @@
 
 A personal desktop gym for competitive programming. It picks problems slightly above your level, times your
 thinking separately from your coding, reads your verdicts from Codeforces, records the idea you missed on every
-problem, and turns all of that into statistics that steer what you are given next. A coach (your local Claude Code)
-gives graded hints, explains what you missed, and reviews your training.
+problem, and turns all of that into statistics that steer what you are given next. A coach (your local Claude Code, or a
+local model such as a Qwen GGUF) gives graded hints, explains what you missed, and reviews your training.
 
 Built around how Um_nik, Errichto and Radewoosh say to practice: see [docs/training-method.md](docs/training-method.md).
 
@@ -14,7 +14,8 @@ You need:
 - **Git** and **Node.js 22.12 or newer** (`node -v` to check; [nvm](https://github.com/nvm-sh/nvm) is the easy way to get it).
 - A **Codeforces handle**. No password or API key: the app reads your public submissions.
 - Optional, for the coach: **[Claude Code](https://claude.com/claude-code)** installed and signed in (run `claude`
-  once in a terminal). Everything else works without it; hints, idea judging and reviews do not.
+  once in a terminal), or a local model server (see [The coach](#the-coach)). Everything else works without
+  either; hints, idea judging and reviews do not.
 
 Then:
 
@@ -49,7 +50,7 @@ If something does not work:
 |---|---|
 | `Electron is not installed yet` | Run `npm install` in the project folder. |
 | `npm install` fails or the app crashes on start with a `node:sqlite` error | Your Node is older than 22.12. Update it. |
-| The coach says Claude Code was not found | Install Claude Code and sign in, or set the full path to `claude` in Settings. |
+| The coach says Claude Code was not found | Install Claude Code and sign in, or set the full path to `claude` in Settings. Or use a local model (see The coach). |
 | The Codeforces panel shows a browser check or stays blank | Complete the check in the panel, or open the problem in your browser (arrow button). |
 
 ## How a session goes
@@ -96,6 +97,22 @@ The coach is the `claude` CLI on your machine, run headless with no tools, no pl
 tutorial when one exists, your notes, the conversation and your statistics. The model is set in Settings (Opus by
 default; Fable is stronger and uses more of your plan). Its usage counts against your Claude plan.
 
+### A local model instead of Claude
+
+The coach can also run on a model on your own machine, for example a Qwen GGUF from unsloth. In Settings, under
+Coach, choose **Local model** and point it at any server that speaks the OpenAI chat API:
+
+| Server | Start it | Address |
+| --- | --- | --- |
+| llama.cpp | `llama-server -m model.gguf -c 16384 --jinja` | `http://localhost:8080/v1` (model name can stay empty) |
+| LM Studio | load the model, start the local server | `http://localhost:1234/v1` |
+| Ollama | `ollama serve` | `http://localhost:11434/v1` |
+
+"Test connection" lists the models the server offers. Give the server a context of 16k tokens or more: the coach
+sends the statement, the tutorial and your notes with every message. The model's own thinking (`<think>` blocks) is
+never shown. A small quantized model solves problems far less reliably than Claude, so its hints are most
+trustworthy on problems that have an official tutorial to ground them.
+
 ## Things to know
 
 - **Codeforces panel.** Sign in there once if you want to submit from inside the app; the login is kept. If
@@ -112,9 +129,10 @@ default; Fable is stronger and uses more of your plan). Its usage counts against
 
 ```bash
 npm test          # logic: level model, recommender, sessions, contests, verdict watcher, stats
-npm run test:ui   # the whole app, headless, against local stand-ins for Codeforces and Claude
+npm run test:ui   # the whole app, headless, against local stand-ins for Codeforces, Claude and a local model
 node test/live/sync.js /tmp/cpgym-live <handle>   # live Codeforces API check
 node test/live/coach.js opus                      # live coach check (a few real Claude calls)
+node test/live/coach.js local http://localhost:8080/v1   # the same check against your local model server
 node test/live/page.js <profile-dir> 1920C        # loads one real problem in the app; use sparingly
 ```
 

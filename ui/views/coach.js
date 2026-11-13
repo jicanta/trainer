@@ -25,7 +25,7 @@ export async function show(root) {
   mount(root, h('div', { class: 'coach-page' },
     h('header', { class: 'page-head', style: { marginBottom: '20px' } },
       h('div', null, h('h1', { class: 'page-title' }, 'Coach'),
-        h('p', { class: 'page-sub' }, coachOk ? `Your local Claude Code (${b.coach.model === 'default' ? 'default model' : b.coach.model}). Hints on a problem live in the solve view, where they are tracked.` : 'Claude Code was not found on this machine.')),
+        h('p', { class: 'page-sub' }, coachOk ? `${b.coach.backend === 'local' ? `A local model (${b.coach.model}) at ${b.coach.url}` : `Your local Claude Code (${b.coach.model === 'default' ? 'default model' : b.coach.model})`}. Hints on a problem live in the solve view, where they are tracked.` : 'Claude Code was not found on this machine.')),
       h('div', { class: 'row' },
         coachOk ? null : button('Open Settings', { onClick: () => navigate('settings') }),
         button('New conversation', { kind: 'ghost', iconName: 'plus', onClick: async () => {

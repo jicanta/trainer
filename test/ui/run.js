@@ -1,5 +1,5 @@
 'use strict';
-// End-to-end check of the whole app, headless, against local stand-ins for Codeforces and Claude.
+// End-to-end check of the whole app, headless, against local stand-ins for Codeforces, Claude and a local model server.
 //   npm run test:ui                      run everything
 //   CPGYM_SHOTS=/some/dir npm run test:ui    also save a screenshot of every screen
 const fs = require('node:fs');
@@ -8,6 +8,7 @@ const path = require('node:path');
 const assert = require('node:assert');
 const { launch } = require('./harness');
 const fakeCf = require('./fake-cf');
+const fakeLocal = require('./fake-local');
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const steps = [];
@@ -313,6 +314,30 @@ const step = (name) => { steps.push(name); console.log(`\n== ${name}`); };
     await page.waitForFunction(() => /Saved/.test(document.querySelector('.page-head').textContent), null, { timeout: 8000 });
     assert.strictEqual((await call('boot')).settings.targetRating, 2100);
     await snap('21-settings');
+
+    step('Local model: the coach can run on an OpenAI-compatible server instead of Claude');
+    const llm = await fakeLocal.start();
+    try {
+      await page.click('.settings-grid .seg-item:has-text("Local model")');
+      await page.waitForSelector('button:has-text("Test connection")', { timeout: 10000 });
+      await page.fill('.settings-grid input[placeholder^="http://localhost:8080"]', llm.origin);
+      await page.press('.settings-grid input[placeholder^="http://localhost:8080"]', 'Tab');
+      await page.click('button:has-text("Test connection")');
+      await page.waitForFunction((m) => document.querySelector('.page').textContent.includes(`Models: ${m}`), llm.model, { timeout: 10000 });
+      await snap('22-settings-local');
+      const st = await call('coach.status');
+      assert.deepStrictEqual([st.backend, st.found, st.url], ['local', true, `${llm.origin}/v1`]);
+      await nav('Coach', '.chat');
+      assert.match(await page.textContent('.page-sub'), /A local model/);
+      const before = await page.locator('.coach-page .msg.coach:not(.pending) .md').count();
+      await page.fill('.chat-input', 'What should I do this week?');
+      await page.press('.chat-input', 'Enter');
+      await page.waitForFunction((n) => document.querySelectorAll('.coach-page .msg.coach:not(.pending) .md').length > n, before, { timeout: 30000 });
+      const said = await page.locator('.coach-page .msg.coach:not(.pending) .md').last().textContent();
+      assert.match(said, /From the local model/);
+      assert.doesNotMatch(said, /What does the data say/, 'the model\'s thinking is not shown');
+      await snap('23-coach-local');
+    } finally { await llm.close(); }
 
     assert.deepStrictEqual(problems, [], 'no console errors or warnings in the UI');
     console.log(`\nALL ${steps.length} UI STEPS PASSED`);

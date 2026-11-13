@@ -154,6 +154,10 @@ const SETTING_DEFAULTS = {
   monthlyGoal: 30,        // not-easy problems solved per month
   coachModel: 'opus',     // default | opus | sonnet | haiku | fable
   claudePath: '',
+  coachBackend: 'claude', // claude | local (an OpenAI-compatible server: llama-server, LM Studio, Ollama)
+  localUrl: 'http://localhost:8080/v1',
+  localModel: '',         // empty = whatever the server has loaded
+  localApiKey: '',
   focusTags: [],
   focusUntil: 0,
   habit: '',              // the one thinking habit from the last coach review

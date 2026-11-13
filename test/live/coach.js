@@ -1,5 +1,6 @@
 'use strict';
 // Live check of the coach against the real Claude Code CLI: node test/live/coach.js [model]
+// Or against a local model server:             node test/live/coach.js local [address] [model name]
 // Uses a throwaway database with one known problem. Costs a few small Claude calls.
 const fs = require('node:fs');
 const os = require('node:os');
@@ -37,7 +38,11 @@ Output
 (async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cpgym-coach-'));
   const db = new DB(path.join(dir, 'cpgym.db'));
-  db.setSetting('coachModel', process.argv[2] || 'haiku');
+  if (process.argv[2] === 'local') { // node test/live/coach.js local [server address] [model name]
+    db.setSetting('coachBackend', 'local');
+    if (process.argv[3]) db.setSetting('localUrl', process.argv[3]);
+    if (process.argv[4]) db.setSetting('localModel', process.argv[4]);
+  } else db.setSetting('coachModel', process.argv[2] || 'haiku');
   db.run('INSERT INTO problems(pid, contest_id, idx, name, rating, tags, solved_count) VALUES(?,?,?,?,?,?,?)', '1920C', 1920, 'C', 'Partitioning the Array', 1600, JSON.stringify(['brute force', 'math', 'number theory']), 20000);
   db.run('INSERT INTO statements(pid, text, fetched_at) VALUES(?,?,?)', '1920C', STATEMENT, Date.now());
   const getSettings = () => allSettings(db);

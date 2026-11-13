@@ -1,5 +1,6 @@
 'use strict';
-// The coach: your local Claude Code CLI, run headless and lean (no tools, no plugins, no project context).
+// The coach: your local Claude Code CLI, run headless and lean (no tools, no plugins, no project context),
+// or a local model behind an OpenAI-compatible server (see local-llm.js).
 // It only ever sees what this file puts in the prompt, and it is told how much it may reveal.
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
@@ -7,6 +8,7 @@ const path = require('node:path');
 const os = require('node:os');
 const stats = require('./stats');
 const { HINT_NAMES } = require('./model');
+const { runLocal, listModels, baseUrl } = require('./local-llm');
 
 function findClaude(configured) {
   const home = os.homedir();
@@ -169,8 +171,8 @@ const clip = (s, n) => { s = String(s || ''); return s.length > n ? `${s.slice(0
 const mins = (ms) => Math.round((ms || 0) / 60000);
 
 class Coach {
-  constructor({ db, getSettings, sessions, contests, emit = () => {}, dataDir, runner = runClaude }) {
-    Object.assign(this, { db, getSettings, sessions, contests, emit, runner });
+  constructor({ db, getSettings, sessions, contests, emit = () => {}, dataDir, runner = runClaude, localRunner = runLocal }) {
+    Object.assign(this, { db, getSettings, sessions, contests, emit, runner, localRunner });
     this.cwd = path.join(dataDir || os.tmpdir(), 'claude');
     try { fs.mkdirSync(this.cwd, { recursive: true }); } catch { /* best effort */ }
     this.jobs = new Map();
@@ -180,8 +182,29 @@ class Coach {
 
   status() {
     const s = this.getSettings();
+    if (s.coachBackend === 'local') return { backend: 'local', found: true, path: null, url: baseUrl(s.localUrl), model: s.localModel || 'the model the server has loaded', rateLimit: null };
     const bin = findClaude(s.claudePath);
-    return { found: !!bin, path: bin, model: s.coachModel, rateLimit: this.rateLimit };
+    return { backend: 'claude', found: !!bin, path: bin, model: s.coachModel, rateLimit: this.rateLimit };
+  }
+
+  // Which model writes the answers, for the record kept with each analysis.
+  modelName() {
+    const s = this.getSettings();
+    return s.coachBackend === 'local' ? `local:${s.localModel || 'default'}` : s.coachModel;
+  }
+
+  // Local models have small context windows, so they get less reference text and less history.
+  limits() {
+    return this.getSettings().coachBackend === 'local'
+      ? { statement: 10000, editorial: 12000, turns: 8, turn: 2000 }
+      : { statement: 14000, editorial: 30000, turns: 16, turn: 4000 };
+  }
+
+  // Asks the local server which models it serves. Used by the "Test connection" button.
+  async testLocal({ url, apiKey } = {}) {
+    const s = this.getSettings();
+    const base = baseUrl(url ?? s.localUrl);
+    return { url: base, models: await listModels({ url: base, apiKey: apiKey ?? s.localApiKey }) };
   }
 
   history(scope, scopeId = 0) {
@@ -211,17 +234,20 @@ class Coach {
     return !!j;
   }
 
-  // Runs Claude once; streams when a job id is given.
+  // Runs the model once; streams when a job id is given.
   async ask({ system, prompt, effort = 'medium', job = null, timeoutMs }) {
     const s = this.getSettings();
-    const bin = findClaude(s.claudePath);
-    if (!bin) throw new Error('Claude Code was not found. Install it or set its path in Settings.');
-    const run = this.runner({
-      bin, system, prompt, model: s.coachModel, effort, cwd: this.cwd, timeoutMs,
-      onDelta: job ? (text) => this.emit('coach:delta', { jobId: job.id, text }) : null,
-      onStatus: job ? (status) => { if (job.status !== status) { job.status = status; this.emit('coach:status', { jobId: job.id, status }); } } : null,
-      onRateLimit: (info) => { this.rateLimit = info; },
-    });
+    const onDelta = job ? (text) => this.emit('coach:delta', { jobId: job.id, text }) : null;
+    const onStatus = job ? (status) => { if (job.status !== status) { job.status = status; this.emit('coach:status', { jobId: job.id, status }); } } : null;
+    let run;
+    if (s.coachBackend === 'local') {
+      // A quantized model on a home GPU is slow, more so while it thinks: allow it four times as long.
+      run = this.localRunner({ url: s.localUrl, model: s.localModel, apiKey: s.localApiKey, system, prompt, onDelta, onStatus, timeoutMs: (timeoutMs || 300000) * 4 });
+    } else {
+      const bin = findClaude(s.claudePath);
+      if (!bin) throw new Error('Claude Code was not found. Install it or set its path in Settings.');
+      run = this.runner({ bin, system, prompt, model: s.coachModel, effort, cwd: this.cwd, timeoutMs, onDelta, onStatus, onRateLimit: (info) => { this.rateLimit = info; } });
+    }
     if (job) job.cancel = run.cancel;
     return (await run.promise).text;
   }
@@ -230,8 +256,9 @@ class Coach {
     const st = this.db.get('SELECT * FROM statements WHERE pid = ?', a.pid);
     const an = this.db.get('SELECT * FROM analyses WHERE pid = ?', a.pid);
     const tags = stats.parseTags(a.tags).join(', ') || 'unknown';
-    const out = [`<problem>\n${a.name} (Codeforces ${a.pid}, rating ${a.rating ?? 'unrated'}, tags: ${tags})\n\n${st ? clip(st.text, 14000) : '(The statement was not captured. Ask the user to paste the relevant part if you need it.)'}\n</problem>`];
-    if (st && st.tutorial) out.push(`<editorial source="official Codeforces tutorial">\n${clip(st.tutorial, 30000)}\n</editorial>`);
+    const lim = this.limits();
+    const out = [`<problem>\n${a.name} (Codeforces ${a.pid}, rating ${a.rating ?? 'unrated'}, tags: ${tags})\n\n${st ? clip(st.text, lim.statement) : '(The statement was not captured. Ask the user to paste the relevant part if you need it.)'}\n</problem>`];
+    if (st && st.tutorial) out.push(`<editorial source="official Codeforces tutorial">\n${clip(st.tutorial, lim.editorial)}\n</editorial>`);
     if (an) out.push(`<analysis>\n${an.content}\n</analysis>`);
     return out.join('\n');
   }
@@ -264,7 +291,7 @@ Return ONLY a JSON object with these keys:
       obj = extractJson(text) || { solution: text, confidence: 'low' };
     }
     obj.grounded_in_editorial = grounded;
-    this.db.run('INSERT OR REPLACE INTO analyses(pid, content, model, grounded, created_at) VALUES(?,?,?,?,?)', a.pid, JSON.stringify(obj, null, 1), this.getSettings().coachModel, grounded ? 1 : 0, Date.now());
+    this.db.run('INSERT OR REPLACE INTO analyses(pid, content, model, grounded, created_at) VALUES(?,?,?,?,?)', a.pid, JSON.stringify(obj, null, 1), this.modelName(), grounded ? 1 : 0, Date.now());
   }
 
   cannedHint(pid, level) {
@@ -288,9 +315,10 @@ reveal level: ${revealLevel} (${HINT_NAMES[revealLevel]}) | discussion: ${open ?
   }
 
   transcript(scope, scopeId, upToId) {
-    const rows = this.history(scope, scopeId).filter((m) => m.id < upToId).slice(-16);
+    const lim = this.limits();
+    const rows = this.history(scope, scopeId).filter((m) => m.id < upToId).slice(-lim.turns);
     if (!rows.length) return '';
-    return `<conversation>\n${rows.map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${clip(m.content, 4000)}`).join('\n\n')}\n</conversation>\n`;
+    return `<conversation>\n${rows.map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${clip(m.content, lim.turn)}`).join('\n\n')}\n</conversation>\n`;
   }
 
   levelNow() {

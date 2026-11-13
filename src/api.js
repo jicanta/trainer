@@ -14,7 +14,7 @@ const NUMBERS = {
   budgetMinutes: [10, 240], stuckMinutes: [5, 120], checkinMinutes: [0, 60], contestMinutes: [20, 300], contestProblems: [4, 6],
   monthlyGoal: [1, 300], focusUntil: [0, Number.MAX_SAFE_INTEGER],
 };
-const CHOICES = { difficulty: Object.keys(BANDS), coachModel: ['default', 'opus', 'sonnet', 'haiku', 'fable'] };
+const CHOICES = { difficulty: Object.keys(BANDS), coachModel: ['default', 'opus', 'sonnet', 'haiku', 'fable'], coachBackend: ['claude', 'local'] };
 
 function coerce(key, value) {
   if (key in NUMBERS) {
@@ -181,6 +181,7 @@ function createApi({ db, cf, sessions, contests, watcher, coach, emit, dataDir, 
     },
 
     'coach.status'() { return coach.status(); },
+    'coach.testLocal'(p) { return coach.testLocal(p || {}); },
     'coach.history'({ scope, scopeId }) { return coach.history(scope, scopeId || 0); },
     'coach.attempt'(p) { return coach.sendAttempt(p); },
     'coach.general'(p) { return coach.sendGeneral(p); },

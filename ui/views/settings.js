@@ -50,6 +50,24 @@ export async function show(root) {
     [['opus', 'Opus (recommended)'], ['fable', 'Fable (strongest, uses more of your plan)'], ['sonnet', 'Sonnet (faster)'], ['haiku', 'Haiku (fastest)'], ['default', 'Whatever Claude Code defaults to']]
       .map(([v, label]) => h('option', { value: v, selected: s.coachModel === v }, label)));
 
+  const local = s.coachBackend === 'local';
+  const rerender = async (patch) => { await save(patch); await refreshBoot(); navigate('settings'); };
+  const text = (key, placeholder, type = 'text') => h('input', { class: 'input', type, value: s[key] || '', placeholder, spellcheck: false, onChange: (e) => save({ [key]: e.target.value.trim() }) });
+  const localUrl = text('localUrl', 'http://localhost:8080/v1');
+  const localModel = text('localModel', 'whatever the server has loaded');
+  const localKey = text('localApiKey', 'none', 'password');
+  const testNote = h('span', { class: 'muted', style: { fontSize: '12.5px' } });
+  const testBtn = button('Test connection', { onClick: async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    testNote.textContent = 'Connecting...';
+    try {
+      const r = await gym.call('coach.testLocal', { url: localUrl.value.trim(), apiKey: localKey.value.trim() });
+      testNote.textContent = r.models.length ? `Connected to ${r.url}. Models: ${r.models.slice(0, 6).join(', ')}${r.models.length > 6 ? ', ...' : ''}` : `Connected to ${r.url}, but it lists no models.`;
+    } catch (err) { testNote.textContent = err.message; }
+    btn.disabled = false;
+  } });
+
   const focusActive = s.focusUntil > Date.now() && (s.focusTags || []).length;
   const card = (title, sub, ...children) => h('section', { class: 'card' }, h('header', { class: 'card-head' }, h('div', null, h('h3', { class: 'card-title' }, title), sub ? h('p', { class: 'card-sub' }, sub) : null)), children);
 
@@ -82,11 +100,19 @@ export async function show(root) {
         h('div', { class: 'settings-grid' },
           field('From contests since', num('minYear', { min: 2010, max: 2100 }), 'Older problems are rated less consistently.'),
           field('Solved by at least', num('minSolved', { min: 0, max: 100000, step: 100 }), 'Filters out obscure or broken problems.'))),
-      card('Coach', 'The coach is your local Claude Code, run without tools, plugins or access to your files.',
+      card('Coach', local
+        ? 'The coach is a model running on your own machine, behind any server that speaks the OpenAI chat API.'
+        : 'The coach is your local Claude Code, run without tools, plugins or access to your files.',
         h('div', { class: 'settings-grid' },
-          field('Model', model),
-          field('Claude Code path', claudePath, coach.found ? `Using ${coach.path}` : 'Not found. Install Claude Code or enter the full path to its "claude" binary.'),
-          usage ? h('div', { class: 'full muted', style: { fontSize: '12.5px' } }, `Plan usage at the last coach call: ${Math.round((usage.five_hour ? usage.five_hour.utilization : 0) * 100)}% of the 5-hour window, ${Math.round((usage.seven_day ? usage.seven_day.utilization : 0) * 100)}% of the week.`) : null,
+          h('div', { class: 'field full' }, h('span', { class: 'field-label' }, 'Runs on'),
+            h('div', null, segmented([{ value: 'claude', label: 'Claude Code' }, { value: 'local', label: 'Local model' }], s.coachBackend, (v) => rerender({ coachBackend: v })))),
+          local ? field('Server address', localUrl, 'llama-server uses port 8080, LM Studio 1234, Ollama 11434.') : field('Model', model),
+          local ? field('Model name', localModel, 'Leave empty for llama-server. LM Studio and Ollama need the name they list.')
+            : field('Claude Code path', claudePath, coach.found ? `Using ${coach.path}` : 'Not found. Install Claude Code or enter the full path to its "claude" binary.'),
+          local ? field('API key', localKey, 'Only if your server asks for one.') : null,
+          local ? h('div', { class: 'full row wrap' }, testBtn, testNote) : null,
+          local ? h('div', { class: 'full muted', style: { fontSize: '12.5px' } }, 'Give the server a context of 16k tokens or more. Small local models are weaker than Claude at solving problems, so trust hints less on problems without an official tutorial.') : null,
+          !local && usage ? h('div', { class: 'full muted', style: { fontSize: '12.5px' } }, `Plan usage at the last coach call: ${Math.round((usage.five_hour ? usage.five_hour.utilization : 0) * 100)}% of the 5-hour window, ${Math.round((usage.seven_day ? usage.seven_day.utilization : 0) * 100)}% of the week.`) : null,
           focusActive || s.habit ? h('div', { class: 'full notice calm' }, h('div', { class: 'notice-title' }, 'Active coach focus'),
             focusActive ? `${s.focusTags.join(', ')} until ${dayYear(s.focusUntil)}. ` : '', s.habit ? `Habit: ${s.habit}` : '',
             h('div', { class: 'notice-actions' }, button('Clear', { small: true, onClick: async () => { await save({ focusTags: [], focusUntil: 0, habit: '' }); navigate('settings'); } }))) : null)),
