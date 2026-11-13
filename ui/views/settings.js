@@ -81,7 +81,7 @@ export async function show(root) {
         h('div', { class: 'settings-grid' },
           field('Starting level', num('levelBase', { min: 800, max: 3500, step: 50 }), 'Changing it shifts the whole history.'),
           field('Goal', num('targetRating', { min: 800, max: 4000, step: 100 })),
-          field('Not-easy problems per month', num('monthlyGoal', { min: 1, max: 300 })))),
+          field('Monthly goal', num('monthlyGoal', { min: 1, max: 300 }), 'Solves at your level or above.'))),
       card('Practice', null,
         h('div', { class: 'settings-grid' },
           h('div', { class: 'field full' }, h('span', { class: 'field-label' }, 'Difficulty'),

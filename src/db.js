@@ -151,7 +151,7 @@ const SETTING_DEFAULTS = {
   checkinMinutes: 10,     // focus check-in cadence while thinking (0 = off)
   contestMinutes: 120,
   contestProblems: 5,
-  monthlyGoal: 30,        // not-easy problems solved per month
+  monthlyGoal: 30,        // problems solved per month, rated at your level or above
   coachModel: 'opus',     // default | opus | sonnet | haiku | fable
   claudePath: '',
   coachBackend: 'claude', // claude | local (an OpenAI-compatible server: llama-server, LM Studio, Ollama)

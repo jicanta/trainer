@@ -113,9 +113,9 @@ export async function show(root) {
     const cards = [
       review.el,
       h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Gym level'), h('div', { class: 'tile-value' }, ins.level), h('div', { class: 'tile-note' }, `Goal ${ins.target}`)),
-      h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Counted attempts'), h('div', { class: 'tile-value' }, ins.attempts), h('div', { class: 'tile-note' }, none ? 'Nothing logged yet' : `${percent(cleanAll / ins.attempts)} clean solves`)),
-      h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Thinking time logged'), h('div', { class: 'tile-value' }, ins.focus.thinkHours, h('small', null, ' h')), h('div', { class: 'tile-note' }, 'Outside contests')),
-      h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Drifts per thinking hour'), h('div', { class: 'tile-value' }, ins.focus.driftsPerHour ?? '-'), h('div', { class: 'tile-note' }, 'From your check-ins')),
+      h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Attempts'), h('div', { class: 'tile-value' }, ins.attempts), h('div', { class: 'tile-note' }, none ? 'Nothing logged yet' : `${percent(cleanAll / ins.attempts)} clean solves`)),
+      h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Thinking time'), h('div', { class: 'tile-value' }, ins.focus.thinkHours, h('small', null, ' h')), h('div', { class: 'tile-note' }, 'Outside contests')),
+      h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Drifts per hour'), h('div', { class: 'tile-value' }, ins.focus.driftsPerHour ?? '-'), h('div', { class: 'tile-note' }, 'From your check-ins')),
 
       chartCard({
         title: 'Level over time', wide: true,

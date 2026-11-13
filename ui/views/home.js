@@ -61,13 +61,14 @@ export async function show(root) {
 
   const goalPct = Math.min(1, o.month.notEasy / Math.max(1, o.month.goal));
   const tiles = [
-    h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Trained this week'), h('div', { class: 'tile-value' }, hoursMinutes(o.week.minutes)),
-      h('div', { class: 'tile-note' }, `${o.week.problems} problems on ${o.week.days} ${o.week.days === 1 ? 'day' : 'days'}`)),
-    h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Clean solves this week'), h('div', { class: 'tile-value' }, o.week.clean, h('small', null, ` of ${o.week.problems}`)),
-      h('div', { class: 'tile-note' }, 'No hints, no editorial')),
-    h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Not-easy problems this month'), h('div', { class: 'tile-value' }, o.month.notEasy, h('small', null, ` of ${o.month.goal}`)),
-      h('div', { class: 'meter', style: { marginTop: '10px' } }, h('span', { style: { width: `${goalPct * 100}%` } }))),
-    h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Last virtual contest'),
+    h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'This week'), h('div', { class: 'tile-value' }, hoursMinutes(o.week.minutes)),
+      h('div', { class: 'tile-note' }, `${o.week.problems} ${o.week.problems === 1 ? 'problem' : 'problems'}, ${o.week.days} ${o.week.days === 1 ? 'day' : 'days'}`)),
+    h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Clean solves'), h('div', { class: 'tile-value' }, o.week.clean, h('small', null, ` of ${o.week.problems}`)),
+      h('div', { class: 'tile-note' }, 'This week, no hints')),
+    h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Solved this month'), h('div', { class: 'tile-value' }, o.month.notEasy, h('small', null, ` of ${o.month.goal}`)),
+      h('div', { class: 'meter', style: { marginTop: '10px' } }, h('span', { style: { width: `${goalPct * 100}%` } })),
+      h('div', { class: 'tile-note' }, 'At your level or above')),
+    h('section', { class: 'card span-3' }, h('div', { class: 'tile-label' }, 'Last contest'),
       h('div', { class: 'tile-value' }, o.lastContest ? relative(o.lastContest.endedAt) : 'None yet'),
       h('div', { class: 'tile-note' }, o.lastContest ? `Solved ${o.lastContest.solved}, performance ${o.lastContest.perf ?? '-'}` : null)),
   ];
