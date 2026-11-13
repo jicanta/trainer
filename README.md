@@ -51,6 +51,8 @@ If something does not work:
 | `Electron is not installed yet` | Run `npm install` in the project folder. |
 | `npm install` fails or the app crashes on start with a `node:sqlite` error | Your Node is older than 22.12. Update it. |
 | The coach says Claude Code was not found | Install Claude Code and sign in, or set the full path to `claude` in Settings. Or use a local model (see The coach). |
+| The coach cannot reach the local model server | Start llama-server, LM Studio or Ollama, then check the address with "Test connection" in Settings. |
+| The coach says the prompt did not fit the context | Restart the model server with a larger context (16k tokens or more). |
 | The Codeforces panel shows a browser check or stays blank | Complete the check in the panel, or open the problem in your browser (arrow button). |
 
 ## How a session goes
@@ -99,19 +101,50 @@ default; Fable is stronger and uses more of your plan). Its usage counts against
 
 ### A local model instead of Claude
 
-The coach can also run on a model on your own machine, for example a Qwen GGUF from unsloth. In Settings, under
-Coach, choose **Local model** and point it at any server that speaks the OpenAI chat API:
+No Claude plan? The coach can run on a model on your own machine instead. It was set up with unsloth's
+`Qwen3.8-27B-GGUF` (the `UD-IQ3_S` quantization) in mind, and works with any model served through the OpenAI chat
+API, which llama.cpp, LM Studio and Ollama all provide. A `.gguf` file is not used directly: one of those programs
+loads it and the app talks to that program.
 
-| Server | Start it | Address |
+**1. Serve the model.** Pick one:
+
+| Server | Command | Address to enter in the app |
 | --- | --- | --- |
-| llama.cpp | `llama-server -m model.gguf -c 16384 --jinja` | `http://localhost:8080/v1` (model name can stay empty) |
-| LM Studio | load the model, start the local server | `http://localhost:1234/v1` |
-| Ollama | `ollama serve` | `http://localhost:11434/v1` |
+| llama.cpp | `llama-server -hf unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S -c 16384 --jinja` (or `-m /path/to/model.gguf` for a file you already have) | `http://localhost:8080/v1` |
+| LM Studio | Load the model, then start the server in the Developer tab | `http://localhost:1234/v1` |
+| Ollama | `ollama run hf.co/unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S` | `http://localhost:11434/v1` |
 
-"Test connection" lists the models the server offers. Give the server a context of 16k tokens or more: the coach
-sends the statement, the tutorial and your notes with every message. The model's own thinking (`<think>` blocks) is
-never shown. A small quantized model solves problems far less reliably than Claude, so its hints are most
-trustworthy on problems that have an official tutorial to ground them.
+**2. Point the app at it.** In **Settings → Coach**, set "Runs on" to **Local model** and fill in:
+
+- **Server address**: from the table above. The server can be on another machine: use its address instead of
+  `localhost`.
+- **Model name**: leave it empty for llama-server, which answers with whatever it has loaded. LM Studio and Ollama
+  need the exact name they list.
+- **API key**: only if you started the server with one.
+
+**3. Press "Test connection".** It shows the models the server offers. If it says the server could not be reached,
+the server is not running or the address or port is wrong.
+
+From then on hints, idea checks, reflection drafts, debriefs and reviews all come from the local model. Switch back
+to Claude Code in the same place at any time; nothing else changes.
+
+What to expect:
+
+- **Context.** Give the server 16k tokens or more (`-c 16384` in llama-server, the context length setting in LM
+  Studio, `num_ctx` in Ollama). The coach sends the statement, the tutorial, your notes and the conversation with
+  every message. To help it fit, a local model gets less tutorial text and less chat history than Claude does. If
+  the coach reports that the prompt did not fit, raise the context.
+- **Speed.** The first hint on a problem is the slowest: the model first studies the problem and writes private
+  notes, then answers. A local model is allowed four times as long as Claude before the app gives up.
+- **Thinking.** Qwen reasons inside `<think>` blocks before it answers. The app shows "Thinking" meanwhile and never
+  displays or stores that text.
+- **Quality.** A 27B model at 3-bit quantization solves problems far less reliably than Claude. Its hints are most
+  trustworthy when the problem has an official Codeforces tutorial, which the app passes to it as ground truth.
+  Without one it has to solve the problem itself, so treat a hint that seems off with suspicion, and correct an
+  idea-drill result you disagree with from the Journal.
+
+To check a server from the terminal, without opening the app:
+`node test/live/coach.js local http://localhost:8080/v1 [model name]`.
 
 ## Things to know
 
