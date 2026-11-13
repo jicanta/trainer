@@ -1,0 +1,24 @@
+{
+  "name": "cp-gym",
+  "productName": "CP Gym",
+  "desktopName": "cp-gym.desktop",
+  "version": "1.0.0",
+  "description": "Personal competitive programming gym: timed practice, virtual contests, insights and a local Claude coach.",
+  "main": "main.js",
+  "private": true,
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "start": "node scripts/start.js",
+    "postinstall": "install-electron",
+    "test": "node --test --test-reporter=spec \"test/unit/*.test.js\"",
+    "test:ui": "node test/ui/run.js",
+    "test:live": "node test/live/sync.js",
+    "install-launcher": "bash scripts/install-launcher.sh",
+    "remove-launcher": "bash scripts/remove-launcher.sh",
+    "enable-sandbox": "bash scripts/enable-sandbox.sh"
+  },
+  "devDependencies": {
+    "electron": "^45.3.0",
+    "playwright-core": "^1.65.0"
+  }
+}

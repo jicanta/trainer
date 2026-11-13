@@ -1,0 +1,5 @@
+node_modules/
+*.log
+cp-gym-export-*.json
+.claude/
+.DS_Store
