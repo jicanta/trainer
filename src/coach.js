@@ -519,6 +519,28 @@ Then end with a fenced json block:
     });
   }
 
+  // A short note on the week's plan: how last week went and what matters in this one.
+  planNote({ summary, save }) {
+    return this.begin('plan', 0, 'plannote', async (job) => {
+      const { level, target } = this.levelNow();
+      const prompt = `${this.trainingData()}
+<plan>
+${summary}
+</plan>
+<request>
+WEEKLY PLAN NOTE. The app built the plan in <plan> from rules. Write a note for the user, under 140 words, in three short parts:
+1. "Last week": one or two sentences on what they did against the plan, with numbers. Skip it if there is no last week.
+2. "This week": what matters most in this plan and why, tied to the evidence in <training_data>.
+3. "Watch for": one concrete thing to do differently while solving this week.
+Do not rewrite the plan or list its days. No preamble.
+</request>`;
+      const answer = (await this.ask({ system: generalSystem(level, target), prompt, effort: 'medium', job })).trim();
+      if (!answer) throw new Error('The coach returned an empty note.');
+      save(answer);
+      return { note: { content: answer, createdAt: Date.now() } };
+    });
+  }
+
   reviews() {
     return this.db.all('SELECT * FROM reviews ORDER BY id DESC LIMIT 20').map((r) => ({
       id: r.id, createdAt: r.created_at, content: r.content, focus: r.focus ? JSON.parse(r.focus) : null, applied: !!r.applied,

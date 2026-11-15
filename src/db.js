@@ -79,6 +79,13 @@ const MIGRATIONS = [
     id INTEGER PRIMARY KEY AUTOINCREMENT, created_at INTEGER NOT NULL, content TEXT NOT NULL, focus TEXT, applied INTEGER NOT NULL DEFAULT 0
   );
   `,
+  `
+  CREATE TABLE plan_weeks (week TEXT PRIMARY KEY, created_at INTEGER NOT NULL, built_day TEXT NOT NULL,
+    profile TEXT NOT NULL DEFAULT '{}', note TEXT, note_at INTEGER);
+  CREATE TABLE plan_days (day TEXT PRIMARY KEY, week TEXT NOT NULL, minutes INTEGER NOT NULL,
+    override INTEGER NOT NULL DEFAULT 0, blocks TEXT NOT NULL DEFAULT '[]');
+  CREATE INDEX plan_days_week ON plan_days(week);
+  `,
 ];
 
 const norm = (v) => (v === undefined ? null : typeof v === 'boolean' ? (v ? 1 : 0) : v);
@@ -163,6 +170,8 @@ const SETTING_DEFAULTS = {
   habit: '',              // the one thinking habit from the last coach review
   focusLayout: true,      // hide Codeforces chrome around the statement
   theme: 'light',         // light | cream | dark
+  planMinutes: [60, 60, 60, 60, 60, 150, 90], // minutes you can train, Monday to Sunday (0 = rest day)
+  planRounds: true,       // put upcoming rated Codeforces rounds into the weekly plan
 };
 
 function allSettings(db) {

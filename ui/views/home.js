@@ -2,6 +2,7 @@
 import { h, mount, icon, segmented, button } from '../lib/dom.js';
 import { gym, state, saveSettings, navigate, fail, confirmDialog } from '../lib/gym.js';
 import { hoursMinutes, minutes, relative, ratingColor, OUTCOMES, MODES, QUEUE_KINDS, signed, day } from '../lib/format.js';
+import { blockRow, weekStrip } from './plan.js';
 
 export const ratingEl = (r) => h('span', { class: 'rating' }, h('span', { class: 'rating-dot', style: { background: ratingColor(r) } }), r ?? 'unrated');
 
@@ -9,6 +10,9 @@ export function outcomeBadge(outcome) {
   const o = OUTCOMES[outcome] || OUTCOMES.active;
   return h('span', { class: ['badge', o.tone] }, o.label);
 }
+
+const HAVE = [0, 30, 60, 90, 120, 180];
+const nearest = (m) => HAVE.reduce((best, x) => (Math.abs(x - m) < Math.abs(best - m) ? x : best), HAVE[0]);
 
 async function startQueue(queueId) {
   try {
@@ -18,7 +22,7 @@ async function startQueue(queueId) {
 }
 
 export async function show(root) {
-  const o = await gym.call('stats.overview');
+  const [o, plan] = await Promise.all([gym.call('stats.overview'), gym.call('plan.get').catch(() => null)]);
   const b = state.boot;
   const s = b.settings;
   const active = b.active;
@@ -39,25 +43,33 @@ export async function show(root) {
       o.cf ? `Codeforces rating ${o.cf.rating ?? 'unrated'}${o.cf.maxRating ? `, max ${o.cf.maxRating}` : ''}. ` : '',
       o.level.n ? `Based on ${o.level.n} counted attempts.` : ''));
 
-  let next;
+  let next = null;
   if (active.contest) {
     next = { label: 'Running now', title: active.contest.title, detail: 'Your contest clock is running.', actions: [button('Back to the contest', { kind: 'primary', iconName: 'flag', onClick: () => navigate('contest') })] };
   } else if (active.attempt) {
     next = { label: 'In progress', title: active.attempt.name, detail: `${MODES[active.attempt.mode]} problem, ${active.attempt.phase === 'paused' ? 'paused' : 'clock running'}.`, actions: [button('Resume', { kind: 'primary', iconName: 'play', onClick: () => navigate('solve') })] };
-  } else {
+  } else if (!plan || !plan.todayView) {
     const sg = o.suggestion;
     const run = sg.kind === 'queue' ? () => startQueue(sg.queueId) : sg.kind === 'contest' ? () => navigate('contest') : sg.kind === 'idea' ? () => navigate('practice', { mode: 'idea' }) : () => navigate('practice');
-    next = {
-      label: 'Suggested now', title: sg.title, detail: sg.detail,
-      actions: [button('Start', { kind: 'primary', iconName: 'play', onClick: run }),
-        sg.kind !== 'practice' ? button('Practice', { kind: 'ghost', onClick: () => navigate('practice') }) : null,
-        sg.kind !== 'idea' ? button('Idea drill', { kind: 'ghost', onClick: () => navigate('practice', { mode: 'idea' }) }) : null,
-        sg.kind !== 'contest' ? button('Contest', { kind: 'ghost', onClick: () => navigate('contest') }) : null],
-    };
+    next = { label: 'Suggested now', title: sg.title, detail: sg.detail, actions: [button('Start', { kind: 'primary', iconName: 'play', onClick: run })] };
   }
-  const nextCard = h('section', { class: 'card next-card span-5' },
-    h('div', { class: 'tile-label' }, next.label), h('div', { class: 'next-title' }, next.title), h('p', { class: 'next-detail' }, next.detail),
-    h('div', { class: 'next-actions' }, next.actions));
+  let nextCard;
+  if (next) {
+    nextCard = h('section', { class: 'card next-card span-5' },
+      h('div', { class: 'tile-label' }, next.label), h('div', { class: 'next-title' }, next.title), h('p', { class: 'next-detail' }, next.detail),
+      h('div', { class: 'next-actions' }, next.actions));
+  } else {
+    const t = plan.todayView;
+    const left = t.blocks.filter((x) => !x.complete && !x.optional).length;
+    nextCard = h('section', { class: 'card next-card plan-today span-5' },
+      h('div', { class: 'row' }, h('div', { class: 'tile-label' }, "Today's plan"), h('span', { class: 'spacer' }),
+        h('button', { class: 'link-btn on-dark', type: 'button', onClick: () => navigate('plan') }, 'Week')),
+      h('div', { class: 'next-title' }, !t.planned ? 'Rest day' : left ? `${left} ${left === 1 ? 'block' : 'blocks'} to go` : 'Done for today'),
+      h('p', { class: 'next-detail' }, t.planned ? `${t.doneMinutes} of ${t.planned} planned minutes done${t.extra ? `, plus ${t.extra} extra` : ''}.` : 'Nothing planned. Rest is part of training.'),
+      h('div', { class: 'plan-today-blocks' }, t.blocks.map((x) => blockRow(t, x, { dark: true, onChange: () => navigate('home') }))),
+      !t.planned || !left ? h('div', { class: 'next-actions' }, button(t.planned ? 'One more problem' : 'Train anyway', { kind: 'ghost', iconName: 'play', onClick: () => navigate('practice') })) : null,
+      weekStrip(plan, { onClick: () => navigate('plan') }));
+  }
 
   const goalPct = Math.min(1, o.month.notEasy / Math.max(1, o.month.goal));
   const tiles = [
@@ -108,9 +120,15 @@ export async function show(root) {
   mount(root, h('div', { class: 'page' },
     h('header', { class: 'page-head' },
       h('div', null, h('h1', { class: 'page-title' }, 'Today'), h('p', { class: 'page-sub' }, today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }))),
-      h('div', { class: 'row' }, h('span', { class: 'muted' }, 'I have'), segmented([30, 60, 90, 120].map((m) => ({ value: m, label: m === 120 ? '2 h or more' : `${m} min` })),
-        [30, 60, 90, 120].includes(s.sessionMinutes) ? s.sessionMinutes : s.sessionMinutes > 105 ? 120 : s.sessionMinutes > 75 ? 90 : s.sessionMinutes > 45 ? 60 : 30,
-        async (v) => { await saveSettings({ sessionMinutes: v }).catch(fail); navigate('home'); }))),
+      h('div', { class: 'row' }, h('span', { class: 'muted' }, 'Today I have'), segmented(HAVE.map((m) => ({ value: m, label: m === 0 ? 'Rest' : m >= 60 ? `${m / 60} h`.replace('.5', '½') : `${m} min` })),
+        nearest(plan && plan.todayView ? plan.todayView.minutes : s.sessionMinutes),
+        async (v) => {
+          try {
+            if (plan) await gym.call('plan.setToday', { minutes: v });
+            else await saveSettings({ sessionMinutes: v });
+          } catch (e) { fail(e); }
+          navigate('home');
+        }))),
     notices.length ? h('div', { class: 'stack', style: { marginBottom: '16px' } }, notices) : null,
     h('div', { class: 'bento' }, levelCard, nextCard, tiles,
       h('section', { class: 'card span-7' }, h('header', { class: 'card-head' }, h('h3', { class: 'card-title' }, 'Queue')), queueList),

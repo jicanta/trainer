@@ -8,6 +8,7 @@ const { Contests } = require('./src/contests');
 const { Watcher } = require('./src/watcher');
 const { Coach } = require('./src/coach');
 const { createApi } = require('./src/api');
+const { Plan } = require('./src/plan');
 const { syncProblems, syncUser } = require('./src/sync');
 
 // Keep everything (database, Codeforces login cookies) in one predictable folder.
@@ -103,8 +104,9 @@ if (!app.requestSingleInstanceLock()) {
     const contests = new Contests({ db, getSettings, emit });
     watcher = new Watcher({ db, cf, getSettings, sessions, contests, emit, intervalMs: Number(process.env.CPGYM_WATCH_MS) || 12000 });
     const coach = new Coach({ db, getSettings, sessions, contests, emit, dataDir });
+    const plan = new Plan({ db, getSettings, cf });
     const api = createApi({
-      db, cf, sessions, contests, watcher, coach, emit, dataDir,
+      db, cf, sessions, contests, watcher, coach, plan, emit, dataDir,
       version: app.getVersion(), sandbox: process.env.CPGYM_SANDBOX !== '0', cfOrigin: CF_ORIGIN,
       openExternal: (url) => shell.openExternal(url), openPath: (p) => shell.openPath(p),
     });

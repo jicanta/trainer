@@ -8,8 +8,8 @@ export async function show(root, params = {}) {
   const b = state.boot;
   const s = b.settings;
   let mode = params.mode === 'idea' ? 'idea' : 'practice';
-  let difficulty = s.difficulty;
-  let topic = '';
+  let difficulty = ['comfortable', 'standard', 'stretch'].includes(params.difficulty) ? params.difficulty : s.difficulty;
+  let topic = b.meta.tags.includes(params.topic) ? params.topic : '';
   let weak = s.weakFocus;
   const blocked = b.active.attempt || b.active.contest;
 
@@ -43,7 +43,7 @@ export async function show(root, params = {}) {
   }
 
   const topicSelect = h('select', { class: 'select', style: { width: '210px' }, onChange: (e) => { topic = e.target.value; load(); } },
-    h('option', { value: '' }, 'Mixed'), b.meta.tags.map((t) => h('option', { value: t }, t)));
+    h('option', { value: '' }, 'Mixed'), b.meta.tags.map((t) => h('option', { value: t, selected: t === topic }, t)));
   const weakCheck = h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: weak, onChange: (e) => { weak = e.target.checked; load(); } }), h('span', null, 'Lean toward my weak topics'));
 
   const refInput = h('input', { class: 'input', placeholder: '1920C or a Codeforces problem link', spellcheck: false });

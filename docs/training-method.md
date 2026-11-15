@@ -28,6 +28,7 @@ offers both and records which one you chose.
 | Measure progress by not-easy problems solved, not by rating. | Errichto, Um_nik | The monthly counter on the home screen. |
 | Challenges, not routine: only enter a virtual contest you are not sure to sweep. | Radewoosh | The contest ladder is built so that half of it is a coin flip or a reach. |
 | Keep a solved problem in your mind; understand what you missed. | Radewoosh, Errichto | The reflection, the journal, and the cold re-solve two weeks after a heavily assisted solve. |
+| Practice regularly; consistency beats bursts. | Errichto | The weekly plan: blocks sized to the time you have each day, a streak, and a plan that shrinks when you did not finish the last one. |
 
 ## The numbers
 
@@ -38,3 +39,9 @@ offers both and records which one you chose.
 - **Contest performance**: the level at which the expected number of solves equals what you solved.
 - **Topic priority**: 0.6 x (how far your topic level is below your level) + 0.4 x (how little you have solved at
   your level on Codeforces), scaled by how often the topic appears at your level.
+- **Weekly plan**: minutes per problem = median think + code time of your recent clean or assisted practice solves at
+  your level, plus 5 for the reflection (your time budget until there are three). Difficulty steps up one preset when
+  60% or more of your last problems at level were clean, down one at 25% or less. One contest per week from 240
+  planned minutes, two from 5 contest lengths (or 3.5 when "too slow" is your top mistake); a rated round counts first.
+  If you finished under 50% of last week, the plan fills 75% of your time; under 75%, 90%. Done = planned minutes
+  covered, where a block of n problems counts in proportion to the problems finished.

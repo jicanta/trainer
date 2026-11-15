@@ -22,6 +22,7 @@ process.stdin.on('end', async () => {
   else if (/HINT REQUEST, level 3/.test(request)) text = 'm must divide every |a_i - a_(i+k)|, so only the gcd of those differences matters.';
   else if (/SOLUTION REQUEST/.test(request)) text = '1. Two numbers are equal modulo m when m divides their difference.\n2. For a divisor k take g = gcd of |a_i - a_(i+k)|.\n3. The divisor scores if g != 1.\n\n**What would have led you there**: restating the condition as divisibility.\n\nImplement it now without looking back at this text.';
   else if (/TRAINING REVIEW/.test(request)) text = '**Where you are**\nGym level near your starting estimate with a handful of attempts.\n\n**What is holding you back**\n- You stay on a wrong approach too long.\n\n**This week**\n- Four practice problems at 1600 to 1700, one contest.\n\n**One habit**\nWrite the complexity before coding.\n\n```json\n{"focus_tags": ["dp", "graphs"], "difficulty": "standard", "habit": "Write the complexity before coding"}\n```';
+  else if (/WEEKLY PLAN NOTE/.test(request)) text = '**This week**\nThe contest on Saturday matters most: you are slow on the third problem.\n\n**Watch for**\nWrite the complexity before coding.';
   else if (/<contest>/.test(prompt)) text = 'You spent most of the clock on one problem. Next time move on after 25 minutes without progress and come back later.';
   else text = `Here is a direct answer to "${request.slice(0, 80)}": train on problems 100 to 200 above your level and reflect after each one.`;
 

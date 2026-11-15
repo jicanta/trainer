@@ -6,6 +6,7 @@ import { feedbackDialog } from './lib/feedback.js';
 
 const VIEWS = {
   home: () => import('./views/home.js'),
+  plan: () => import('./views/plan.js'),
   practice: () => import('./views/practice.js'),
   solve: () => import('./views/solve.js'),
   reflect: () => import('./views/reflect.js'),
@@ -18,7 +19,7 @@ const VIEWS = {
 };
 
 const NAV = [
-  ['home', 'Today', 'home'], ['practice', 'Practice', 'target'], ['contest', 'Contest', 'flag'], ['insights', 'Insights', 'chart'],
+  ['home', 'Today', 'home'], ['plan', 'Plan', 'calendar'], ['practice', 'Practice', 'target'], ['contest', 'Contest', 'flag'], ['insights', 'Insights', 'chart'],
   ['journal', 'Journal', 'book'], ['coach', 'Coach', 'chat'], ['settings', 'Settings', 'sliders'],
 ];
 

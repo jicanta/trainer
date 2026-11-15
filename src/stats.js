@@ -385,5 +385,5 @@ function coachContext(db, settings, now = Date.now()) {
 
 module.exports = {
   CORE_TAGS, MISTAKES, parseTags, median, outcomeOf, summarize, countedAttempts, skill, topicProfile, queueItems,
-  overview, insights, cfAnalysis, reminder, coachContext, byIdx, startOfWeek, startOfMonth,
+  overview, insights, cfAnalysis, reminder, coachContext, byIdx, startOfWeek, startOfMonth, activeMinutes,
 };

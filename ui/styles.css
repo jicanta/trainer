@@ -401,3 +401,49 @@ button.list-row:hover .list-title, .list-row.clickable:hover .list-title { text-
 
 .list-meta.wrap { white-space: normal; }
 .results-chat { height: 440px; }
+
+/* Plan */
+.plan-today { gap: 0; }
+.plan-today .next-title { font-size: 24px; }
+.link-btn.on-dark { color: color-mix(in srgb, var(--hero-fg) 70%, var(--hero-bg)); text-decoration-color: color-mix(in srgb, var(--hero-fg) 35%, var(--hero-bg)); }
+.link-btn.on-dark:hover { color: var(--hero-fg); }
+.plan-today-blocks { display: flex; flex-direction: column; margin-top: 14px; }
+.plan-block { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--border); }
+.plan-day .plan-block { padding: 11px 20px; }
+.plan-block.dark { border-top-color: color-mix(in srgb, var(--hero-fg) 16%, var(--hero-bg)); }
+.plan-block-title { color: var(--ink); font-weight: 500; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.plan-block.dark .plan-block-title { color: var(--hero-fg); }
+.plan-block-meta { margin-top: 2px; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.plan-block.dark .plan-block-meta { color: color-mix(in srgb, var(--hero-fg) 66%, var(--hero-bg)); }
+.plan-block.complete .plan-block-title { text-decoration: line-through; text-decoration-color: var(--muted); }
+.plan-block.optional .plan-block-title { color: var(--muted); }
+.plan-block-side { display: flex; align-items: center; gap: 10px; }
+.plan-count { font-family: var(--mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.plan-block.dark .plan-count { color: color-mix(in srgb, var(--hero-fg) 70%, var(--hero-bg)); }
+.plan-opt { font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.plan-check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border-strong); background: none; display: grid; place-items: center; color: var(--on-ink); padding: 0; }
+.plan-check:not(:disabled):hover { border-color: var(--ink); }
+.plan-check:disabled { opacity: 0.45; cursor: default; }
+.plan-check.on { background: var(--good); border-color: var(--good); color: #fff; }
+.plan-block.dark .plan-check:not(.on) { border-color: color-mix(in srgb, var(--hero-fg) 40%, var(--hero-bg)); }
+.plan-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 18px; padding-top: 14px; border-top: 1px solid color-mix(in srgb, var(--hero-fg) 16%, var(--hero-bg)); }
+.plan-cell { display: flex; flex-direction: column; align-items: center; gap: 5px; border: 0; background: none; padding: 4px 0; border-radius: 6px; color: color-mix(in srgb, var(--hero-fg) 66%, var(--hero-bg)); font-size: 11px; }
+.plan-cell:hover { background: color-mix(in srgb, var(--hero-fg) 8%, var(--hero-bg)); }
+.plan-cell.is-today { color: var(--hero-fg); font-weight: 600; }
+.plan-cell-bar { width: 10px; height: 34px; border-radius: 5px; background: color-mix(in srgb, var(--hero-fg) 14%, var(--hero-bg)); display: flex; align-items: flex-end; overflow: hidden; }
+.plan-cell-bar > span { display: block; width: 100%; background: var(--hero-fg); border-radius: 5px; }
+.plan-cell.done .plan-cell-bar > span { background: var(--good); }
+.plan-cell.missed .plan-cell-bar { background: color-mix(in srgb, var(--critical) 45%, var(--hero-bg)); }
+.plan-cell-min { font-family: var(--mono); font-size: 10.5px; }
+.plan-day { border-bottom: 1px solid var(--border); }
+.plan-day:last-child { border-bottom: 0; }
+.plan-day.is-today { background: var(--wash); }
+.plan-day-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px 10px; font-size: 12.5px; }
+.plan-day-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.plan-day .empty { padding: 0 20px 14px; }
+.plan-why { display: flex; flex-direction: column; gap: 8px; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+.plan-avail { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.plan-avail-day { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; color: var(--muted); text-align: center; }
+.plan-avail-day .input { width: 100%; padding: 0 2px; text-align: center; font-size: 12.5px; -moz-appearance: textfield; }
+.plan-avail-day .input::-webkit-inner-spin-button, .plan-avail-day .input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.plan-started { padding: 14px 20px; font-size: 12.5px; }

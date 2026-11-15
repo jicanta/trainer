@@ -55,6 +55,27 @@ If something does not work:
 | The coach says the prompt did not fit the context | Restart the model server with a larger context (16k tokens or more). |
 | The Codeforces panel shows a browser check or stays blank | Complete the check in the panel, or open the problem in your browser (arrow button). |
 
+## The weekly plan
+
+**Plan** turns the minutes you have each day (set under "Your usual week"; 0 is a rest day) into concrete blocks:
+practice problems at a given difficulty, idea drills, upsolves, re-solves, a virtual contest, and upcoming rated
+Codeforces rounds. Today shows today's blocks with a Start button each, and a strip with the week. "Today I have"
+changes only today.
+
+- **Built from your log.** The planner measures how long a problem takes you, moves the difficulty with your
+  clean-solve rate at your level, adds idea drills when you keep missing the key observation (or full solves when
+  you keep losing problems to bugs), puts one short block on your weakest topic, makes one day a challenge day, and
+  follows each contest with upsolves. "Why this plan" lists the reasons.
+- **Adapts.** Past days are frozen. Today and the rest of the week are rebuilt once a day, when something new lands
+  in the queue, and when you change your week. If you finished less than half of last week's plan, the new one
+  fills less of your time.
+- **Tracked without typing.** A block counts as done when the matching attempts or contests are finished. A real
+  round counts when your contest submissions sync; any block can also be checked by hand.
+- **Metrics**: share of planned minutes done, minutes trained against planned, the streak of planned days
+  finished, problems solved at your level, and a chart of the plan done per week.
+- **Coach note** (optional, one call): how last week went and what matters most in this one.
+- Rounds come from the Codeforces API (`contest.list`, at most twice a day), only those rated for you.
+
 ## How a session goes
 
 **Practice.** The picker shows six unseen problems in your band (your level up to 300 above it by default).
@@ -174,6 +195,7 @@ node test/live/page.js <profile-dir> 1920C        # loads one real problem in th
 | What | Where |
 |---|---|
 | Difficulty bands, contest ladders, topic weighting | `src/recommend.js` |
+| The weekly plan: block rules, adaptation, progress | `src/plan.js` |
 | Level model, hint credit | `src/model.js` |
 | Queue rules (park, upsolve, re-solve), time budgets | `src/sessions.js` |
 | Coach prompts and reveal levels | `src/coach.js` |

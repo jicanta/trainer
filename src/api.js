@@ -18,6 +18,10 @@ const NUMBERS = {
 const CHOICES = { difficulty: Object.keys(BANDS), coachModel: ['default', 'opus', 'sonnet', 'haiku', 'fable'], coachBackend: ['claude', 'local'], theme: ['light', 'cream', 'dark'] };
 
 function coerce(key, value) {
+  if (key === 'planMinutes') {
+    if (!Array.isArray(value) || value.length !== 7) throw new Error('"planMinutes" needs seven values, Monday to Sunday.');
+    return value.map((v) => clamp(Math.round((Number(v) || 0) / 5) * 5, 0, 480));
+  }
   if (key in NUMBERS) {
     const n = Number(value);
     if (!Number.isFinite(n)) throw new Error(`"${key}" must be a number.`);
@@ -32,7 +36,7 @@ function coerce(key, value) {
   return String(value ?? '').trim();
 }
 
-function createApi({ db, cf, sessions, contests, watcher, coach, emit, dataDir, version, sandbox, cfOrigin, openExternal, openPath }) {
+function createApi({ db, cf, sessions, contests, watcher, coach, plan, emit, dataDir, version, sandbox, cfOrigin, openExternal, openPath }) {
   const settings = () => allSettings(db);
   const level = () => stats.skill(db, settings()).level;
   // Sync jobs run one after another; each caller gets its own result.
@@ -171,6 +175,27 @@ function createApi({ db, cf, sessions, contests, watcher, coach, emit, dataDir, 
     'stats.overview'() { return stats.overview(db, settings()); },
     'stats.insights'() { return stats.insights(db, settings()); },
 
+    // The weekly plan. Upcoming rounds are fetched in the background (best effort); a fresh list
+    // rebuilds the remaining days and the next view shows them.
+    'plan.get'() {
+      plan.refreshRounds().then((fresh) => { if (fresh) { plan.build({ reason: 'new rounds' }); emit('plan', { what: 'rounds' }); } }).catch(() => {});
+      return plan.view();
+    },
+    'plan.setToday'({ minutes }) { return plan.setToday(minutes); },
+    'plan.check'({ day, index, done }) { return plan.check(day, index, done); },
+    'plan.availability'({ minutes, rounds }) {
+      const patch = {};
+      if (minutes !== undefined) patch.planMinutes = coerce('planMinutes', minutes);
+      if (rounds !== undefined) patch.planRounds = !!rounds;
+      for (const [k, v] of Object.entries(patch)) db.setSetting(k, v);
+      return plan.replan();
+    },
+    'plan.replan'() { return plan.replan(); },
+    'coach.planNote'() {
+      const v = plan.view();
+      return coach.planNote({ summary: plan.summaryText(v), save: (text) => plan.saveNote(v.week.key, text) });
+    },
+
     'queue.list'() { return stats.queueItems(db); },
     'queue.remove'({ id }) { db.run('UPDATE queue SET done_at = ? WHERE id = ? AND done_at IS NULL', Date.now(), id); return true; },
     'queue.add'({ pid, kind = 'redo', days = 0, reason }) {
@@ -200,7 +225,7 @@ function createApi({ db, cf, sessions, contests, watcher, coach, emit, dataDir, 
 
     'data.export'() {
       const dump = {};
-      for (const t of ['settings', 'attempts', 'attempt_events', 'contest_runs', 'queue', 'chat_messages', 'reviews']) dump[t] = db.all(`SELECT * FROM ${t}`);
+      for (const t of ['settings', 'attempts', 'attempt_events', 'contest_runs', 'queue', 'chat_messages', 'reviews', 'plan_weeks', 'plan_days']) dump[t] = db.all(`SELECT * FROM ${t}`);
       const file = path.join(dataDir, `cp-gym-export-${new Date().toISOString().slice(0, 10)}.json`);
       fs.writeFileSync(file, JSON.stringify(dump, null, 1));
       return { file };
