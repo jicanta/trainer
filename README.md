@@ -1,8 +1,8 @@
 # CP Gym
 
-A personal desktop gym for competitive programming. It picks problems slightly above your level, times your
-thinking separately from your coding, reads your verdicts from Codeforces, records the idea you missed on every
-problem, and turns all of that into statistics that steer what you are given next. A coach (your local Claude Code, or a
+A personal desktop gym for competitive programming. It plans your week around the time you have, picks problems
+slightly above your level, times your thinking separately from your coding, reads your verdicts from Codeforces,
+records the idea you missed on every problem, and turns all of that into statistics that steer what you are given next. A coach (your local Claude Code, or a
 local model such as a Qwen GGUF) gives graded hints, explains what you missed, and reviews your training.
 
 Built around how Um_nik, Errichto and Radewoosh say to practice: see [docs/training-method.md](docs/training-method.md).
@@ -27,7 +27,8 @@ npm start
 ```
 
 On first start the app asks for your Codeforces handle, imports your submissions, suggests a starting level and
-downloads the problem set. After that, pick **Practice** and go.
+downloads the problem set. Then open **Plan**, set the minutes you can train each day under "Your usual week", and
+follow the blocks on **Today**.
 
 Your training data is yours and stays on your machine (see "Things to know"); nothing in this repository is personal.
 
@@ -182,7 +183,7 @@ To check a server from the terminal, without opening the app:
 ## Tests
 
 ```bash
-npm test          # logic: level model, recommender, sessions, contests, verdict watcher, stats
+npm test          # logic: level model, recommender, sessions, contests, verdict watcher, stats, weekly plan
 npm run test:ui   # the whole app, headless, against local stand-ins for Codeforces, Claude and a local model
 node test/live/sync.js /tmp/cpgym-live <handle>   # live Codeforces API check
 node test/live/coach.js opus                      # live coach check (a few real Claude calls)
@@ -195,7 +196,7 @@ node test/live/page.js <profile-dir> 1920C        # loads one real problem in th
 | What | Where |
 |---|---|
 | Difficulty bands, contest ladders, topic weighting | `src/recommend.js` |
-| The weekly plan: block rules, adaptation, progress | `src/plan.js` |
+| The weekly plan: block rules, adaptation, progress | `src/plan.js` (screen: `ui/views/plan.js`) |
 | Level model, hint credit | `src/model.js` |
 | Queue rules (park, upsolve, re-solve), time budgets | `src/sessions.js` |
 | Coach prompts and reveal levels | `src/coach.js` |
