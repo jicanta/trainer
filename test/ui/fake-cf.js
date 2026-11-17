@@ -116,7 +116,10 @@ async function start() {
       if (!p) return send(403, 'text/html; charset=utf-8', '<!doctype html><html><head><title>Just a moment...</title></head><body><div id="challenge-form">Checking your browser before accessing the site.</div></body></html>');
       return send(200, 'text/html; charset=utf-8', problemPage(p));
     }
-    m = /^\/contest\/(\d+)\/submit\/([A-Za-z]\d*)$/.exec(url.pathname);
+    // Gym problems are not in the problem set; any of them gets the sample statement.
+    m = /^\/gym\/(\d+)\/problem\/([A-Za-z]\d*)$/.exec(url.pathname);
+    if (m) return send(200, 'text/html; charset=utf-8', problemPage({ contestId: Number(m[1]), index: m[2], name: `Gym ${m[1]}${m[2]}`, rating: 0, tags: [] }));
+    m = /^\/(?:contest|gym)\/(\d+)\/submit\/([A-Za-z]\d*)$/.exec(url.pathname);
     if (m) return send(200, 'text/html; charset=utf-8', simplePage(`Submit ${m[1]}${m[2]}`, '<p>Submit form (stand-in).</p>'));
     if (url.pathname.startsWith('/submissions/')) return send(200, 'text/html; charset=utf-8', simplePage('Submissions', '<p>Submission list (stand-in).</p>'));
     return send(404, 'text/html; charset=utf-8', simplePage('Not found', ''));

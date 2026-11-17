@@ -3,6 +3,7 @@
 // quietly weighted toward weak topics. Tags never leave this module while a problem is unsolved.
 const { roundLevel, clamp } = require('./model');
 const { parseTags, topicProfile, byIdx } = require('./stats');
+const { GYM_MIN_ID } = require('./icpc');
 
 // Rating offsets from the current level and how often each is drawn.
 const BANDS = {
@@ -29,8 +30,8 @@ function candidates(db, settings, { minRating, maxRating, topic, seenSets }) {
             c.name AS contest_name, c.start AS contest_start, c.kind
      FROM problems p LEFT JOIN cf_contests c ON c.id = p.contest_id
      WHERE p.rating BETWEEN ? AND ? AND p.solved_count >= ? AND p.tags NOT LIKE '%*special%'
-       AND COALESCE(c.kind, 'other') != 'excluded' AND COALESCE(c.start, 0) >= ?`,
-    minRating, maxRating, settings.minSolved ?? 300, minStart);
+       AND COALESCE(c.kind, 'other') != 'excluded' AND COALESCE(c.start, 0) >= ? AND p.contest_id < ?`,
+    minRating, maxRating, settings.minSolved ?? 300, minStart, GYM_MIN_ID);
   const s = seenSets || seen(db);
   const out = [];
   for (const r of rows) {
@@ -41,6 +42,18 @@ function candidates(db, settings, { minRating, maxRating, topic, seenSets }) {
   }
   return out;
 }
+
+// Problems from official ICPC contests. Their rating is an estimate (see icpc.js) and they have no tags.
+function icpcCandidates(db, settings, { minRating, maxRating, seenSets }) {
+  const rows = db.all(
+    `SELECT p.pid, p.contest_id, p.idx, p.name, p.rating, p.solved_count, i.contest_name, i.season, i.teams
+     FROM icpc i JOIN problems p ON p.pid = i.pid
+     WHERE p.rating BETWEEN ? AND ? AND COALESCE(i.season, 0) >= ?`,
+    minRating, maxRating, settings.minYear || 2019);
+  const s = seenSets || seen(db);
+  return rows.filter((r) => !s.pids.has(r.pid) && !s.names.has(r.name)).map((r) => ({ ...r, tags: [] }));
+}
+const icpcRecency = (p) => (p.season >= 2022 ? 1 : p.season >= 2020 ? 0.85 : 0.7);
 
 // Weighted sampling without replacement (Efraimidis-Spirakis).
 function sample(items, k, weight, rng) {
@@ -84,7 +97,8 @@ function weigher(db, settings, level, weakFocus) {
 function publicProblem(p) {
   return {
     pid: p.pid, contestId: p.contest_id, index: p.idx, name: p.name, rating: p.rating, solvedCount: p.solved_count,
-    contestName: p.contest_name || null, year: p.contest_start ? new Date(p.contest_start * 1000).getUTCFullYear() : null,
+    contestName: p.contest_name || null, year: p.contest_start ? new Date(p.contest_start * 1000).getUTCFullYear() : p.season || null,
+    teams: p.teams ?? null, // ICPC only: solvedCount of this many teams
   };
 }
 
@@ -95,19 +109,23 @@ function shortlist(db, settings, level, opts = {}) {
   const base = roundLevel(level);
   const seenSets = seen(db);
   const weakFocus = opts.weakFocus ?? settings.weakFocus;
-  const w = weigher(db, settings, level, weakFocus && !opts.topic);
+  const icpc = opts.source === 'icpc';
+  const w = icpc ? icpcRecency : weigher(db, settings, level, weakFocus && !opts.topic);
+  const pool = (minRating, maxRating) => (icpc
+    ? icpcCandidates(db, settings, { minRating, maxRating, seenSets })
+    : candidates(db, settings, { minRating, maxRating, topic: opts.topic, seenSets }));
   const quotas = allocate(band.map((b) => b[1]), n);
   const picks = [];
   band.forEach(([off], i) => {
     if (!quotas[i]) return;
     const r = clamp(base + off, 800, 3500);
-    picks.push(...sample(candidates(db, settings, { minRating: r, maxRating: r, topic: opts.topic, seenSets }), quotas[i], w, rng));
+    picks.push(...sample(pool(r, r), quotas[i], w, rng));
   });
   if (picks.length < n) {
     const have = new Set(picks.map((p) => p.pid));
     const lo = clamp(base + band[0][0] - 100, 800, 3500);
     const hi = clamp(base + band[band.length - 1][0] + 100, 800, 3500);
-    const extra = candidates(db, settings, { minRating: lo, maxRating: hi, topic: opts.topic, seenSets }).filter((p) => !have.has(p.pid));
+    const extra = pool(lo, hi).filter((p) => !have.has(p.pid));
     picks.push(...sample(extra, n - picks.length, w, rng));
   }
   return picks.sort((a, b) => a.rating - b.rating || a.pid.localeCompare(b.pid)).map(publicProblem);
@@ -126,8 +144,8 @@ function lookup(db, text) {
   const ref = parseProblemRef(text);
   if (!ref) return null;
   const p = db.get(
-    `SELECT p.*, c.name AS contest_name, c.start AS contest_start FROM problems p
-     LEFT JOIN cf_contests c ON c.id = p.contest_id WHERE p.pid = ?`, ref.pid);
+    `SELECT p.*, COALESCE(c.name, i.contest_name) AS contest_name, c.start AS contest_start, i.season, i.teams FROM problems p
+     LEFT JOIN cf_contests c ON c.id = p.contest_id LEFT JOIN icpc i ON i.pid = p.pid WHERE p.pid = ?`, ref.pid);
   if (p) return { ...publicProblem(p), known: true };
   return { pid: ref.pid, contestId: ref.contestId, index: ref.index, name: `Problem ${ref.pid}`, rating: null, solvedCount: null, contestName: null, year: null, known: false };
 }
@@ -181,4 +199,4 @@ function buildRound(db, settings, level, count, rng = Math.random, now = Date.no
   return null;
 }
 
-module.exports = { shortlist, lookup, parseProblemRef, buildMix, buildRound, candidates, seen, publicProblem, BANDS, MIX_OFFSETS };
+module.exports = { shortlist, lookup, parseProblemRef, buildMix, buildRound, candidates, icpcCandidates, seen, publicProblem, BANDS, MIX_OFFSETS };

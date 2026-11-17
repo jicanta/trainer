@@ -86,6 +86,10 @@ const MIGRATIONS = [
     override INTEGER NOT NULL DEFAULT 0, blocks TEXT NOT NULL DEFAULT '[]');
   CREATE INDEX plan_days_week ON plan_days(week);
   `,
+  // ICPC problems live in "problems" like any other (Gym contest ids start at 100000); this holds what only they have.
+  `
+  CREATE TABLE icpc (pid TEXT PRIMARY KEY, contest_name TEXT NOT NULL, season INTEGER, teams INTEGER NOT NULL);
+  `,
 ];
 
 const norm = (v) => (v === undefined ? null : typeof v === 'boolean' ? (v ? 1 : 0) : v);
@@ -149,6 +153,7 @@ const SETTING_DEFAULTS = {
   levelBase: 1500,        // starting level estimate; the gym moves it from here
   targetRating: 2000,
   difficulty: 'standard', // comfortable | standard | stretch
+  practiceSource: 'codeforces', // codeforces | icpc: where the practice picker draws from
   weakFocus: true,        // bias problem selection toward weak topics (tags stay hidden)
   minYear: 2019,
   minSolved: 300,

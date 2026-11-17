@@ -96,6 +96,21 @@ with the Codeforces statement on the left and your clock, notes and coach on the
 - Afterwards you write a short **reflection**: key idea, what you missed, what went wrong, one takeaway. The coach
   can draft it. This is what the insights are made of.
 
+**ICPC problems.** "Problems from" in the picker switches between Codeforces and ICPC, and the choice is
+remembered. ICPC draws from the official ICPC contests in the Codeforces Gym (regionals, subregionals, national
+contests, finals), in the same band around your level, so the style and topics of real ICPC sets get covered too.
+You solve and submit on Codeforces as usual and verdicts are read the same way. The Gym has no ratings or tags, so:
+
+- Each problem's rating is **estimated** from how many teams solved it: the official teams of the real contest and
+  the Codeforces teams that later played it virtually. Each row shows the official count. The order inside a
+  contest is reliable; the level against other contests can be off by a few hundred points. See
+  [docs/icpc.md](docs/icpc.md).
+- There is no topic filter and no weak-topic weighting, and these attempts do not feed the topic statistics.
+- Many Gym statements are PDFs. If the panel shows no statement, open the problem in your browser and use "Paste it
+  instead" in the Coach tab.
+
+The list ships with the app (`data/icpc.json`, 541 contests). `node scripts/build-icpc.js` adds new ones.
+
 **Idea drill.** Same, without coding: think the problem through, write the full idea, and the coach judges it.
 More problems per hour, all of it thinking.
 
@@ -183,7 +198,7 @@ To check a server from the terminal, without opening the app:
 ## Tests
 
 ```bash
-npm test          # logic: level model, recommender, sessions, contests, verdict watcher, stats, weekly plan
+npm test          # logic: level model, recommender, ICPC ratings, sessions, contests, verdict watcher, stats, weekly plan
 npm run test:ui   # the whole app, headless, against local stand-ins for Codeforces, Claude and a local model
 node test/live/sync.js /tmp/cpgym-live <handle>   # live Codeforces API check
 node test/live/coach.js opus                      # live coach check (a few real Claude calls)
@@ -196,6 +211,7 @@ node test/live/page.js <profile-dir> 1920C        # loads one real problem in th
 | What | Where |
 |---|---|
 | Difficulty bands, contest ladders, topic weighting | `src/recommend.js` |
+| ICPC problems: rating estimate, which contests count | `src/icpc.js` (data: `scripts/build-icpc.js`) |
 | The weekly plan: block rules, adaptation, progress | `src/plan.js` (screen: `ui/views/plan.js`) |
 | Level model, hint credit | `src/model.js` |
 | Queue rules (park, upsolve, re-solve), time budgets | `src/sessions.js` |

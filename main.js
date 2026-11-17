@@ -10,6 +10,7 @@ const { Coach } = require('./src/coach');
 const { createApi } = require('./src/api');
 const { Plan } = require('./src/plan');
 const { syncProblems, syncUser } = require('./src/sync');
+const icpc = require('./src/icpc');
 
 // Keep everything (database, Codeforces login cookies) in one predictable folder.
 const dataDir = process.env.CPGYM_DATA_DIR || path.join(app.getPath('appData'), 'cp-gym');
@@ -98,6 +99,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     db = openDb(dataDir);
+    icpc.load(db);
     const getSettings = () => allSettings(db);
     const cf = new CF({ base: CF_API, minGapMs: CF_API ? 150 : undefined });
     const sessions = new Sessions({ db, getSettings, emit });

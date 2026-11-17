@@ -15,7 +15,7 @@ const NUMBERS = {
   budgetMinutes: [10, 240], stuckMinutes: [5, 120], checkinMinutes: [0, 60], contestMinutes: [20, 300], contestProblems: [4, 6],
   monthlyGoal: [1, 300], focusUntil: [0, Number.MAX_SAFE_INTEGER],
 };
-const CHOICES = { difficulty: Object.keys(BANDS), coachModel: ['default', 'opus', 'sonnet', 'haiku', 'fable'], coachBackend: ['claude', 'local'], theme: ['light', 'cream', 'dark'] };
+const CHOICES = { difficulty: Object.keys(BANDS), coachModel: ['default', 'opus', 'sonnet', 'haiku', 'fable'], coachBackend: ['claude', 'local'], practiceSource: ['codeforces', 'icpc'], theme: ['light', 'cream', 'dark'] };
 
 function coerce(key, value) {
   if (key === 'planMinutes') {
@@ -52,7 +52,8 @@ function createApi({ db, cf, sessions, contests, watcher, coach, plan, emit, dat
       return {
         settings: settings(),
         user: db.getSetting('cfUser', null),
-        problems: db.get('SELECT COUNT(*) AS n FROM problems').n,
+        problems: db.get('SELECT COUNT(*) AS n FROM problems WHERE contest_id < 100000').n,
+        icpcProblems: db.get('SELECT COUNT(*) AS n FROM icpc').n,
         problemsSyncedAt: db.getSetting('problemsSyncedAt', 0),
         userSyncedAt: db.getSetting('userSyncedAt', 0),
         active: { attempt: sessions.active(), contest: contests.active() },
@@ -102,7 +103,7 @@ function createApi({ db, cf, sessions, contests, watcher, coach, plan, emit, dat
       const lv = level();
       return {
         level: Math.round(lv), difficulty: opts.difficulty || s.difficulty,
-        items: recommend.shortlist(db, s, lv, { difficulty: opts.difficulty, topic: opts.topic || null, weakFocus: opts.weakFocus, n: opts.n }),
+        items: recommend.shortlist(db, s, lv, { source: opts.source, difficulty: opts.difficulty, topic: opts.topic || null, weakFocus: opts.weakFocus, n: opts.n }),
       };
     },
     'practice.lookup'({ text }) { return recommend.lookup(db, text); },

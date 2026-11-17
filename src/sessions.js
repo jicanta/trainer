@@ -4,7 +4,10 @@ const { attemptScore, clamp } = require('./model');
 const stats = require('./stats');
 
 const DAY = 86400000;
-const problemUrl = (contestId, index) => `https://codeforces.com/problemset/problem/${contestId}/${index}`;
+// Gym contests (ids from 100000) are not in the problem set and have their own address.
+const problemUrl = (contestId, index) => (contestId >= 100000
+  ? `https://codeforces.com/gym/${contestId}/problem/${index}`
+  : `https://codeforces.com/problemset/problem/${contestId}/${index}`);
 
 class Sessions {
   constructor({ db, getSettings, emit = () => {}, now = () => Date.now() }) {

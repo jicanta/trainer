@@ -95,6 +95,17 @@ const step = (name) => { steps.push(name); console.log(`\n== ${name}`); };
     assert.ok((await page.locator('.problem-row').count()) >= 6);
     await snap('04-practice');
 
+    step('Practice: the ICPC source offers Gym problems with team counts and no topic controls');
+    await page.click('.seg-item:has-text("ICPC")');
+    await page.waitForSelector('.problem-row .list-meta:has-text("teams")', { timeout: 10000 });
+    const icpcList = await call('practice.shortlist', { source: 'icpc' });
+    assert.ok(icpcList.items.length > 0 && icpcList.items.every((p) => p.contestId >= 100000 && p.teams >= 30 && !('tags' in p)));
+    assert.strictEqual(await page.locator('label.field:has-text("Topic")').isVisible(), false, 'no topic filter: ICPC problems have no tags');
+    assert.strictEqual((await call('boot')).settings.practiceSource, 'icpc', 'the source is remembered');
+    await snap('04b-practice-icpc');
+    await page.click('.seg-item:has-text("Codeforces")');
+    await page.waitForSelector('.problem-row .list-meta:has-text("Codeforces Round")', { timeout: 10000 });
+
     step('Solve: statement captured from the page, spoilers hidden, clock phases, pause');
     await page.click('.problem-row >> nth=0 >> text=Start');
     await page.waitForSelector('.work', { timeout: 15000 });

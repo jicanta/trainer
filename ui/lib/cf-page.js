@@ -22,10 +22,12 @@ export const DARK_CSS = `
 `;
 
 const origin = () => (state.boot && state.boot.meta && state.boot.meta.cfOrigin) || 'https://codeforces.com';
-export const problemUrl = (contestId, index) => `${origin()}/problemset/problem/${contestId}/${index}?locale=en`;
-export const submitUrl = (contestId, index) => `${origin()}/contest/${contestId}/submit/${index}?locale=en`;
+// Gym contests (ids from 100000) are not in the problem set and have their own addresses.
+const isGym = (contestId) => contestId >= 100000;
+export const problemUrl = (contestId, index) => `${origin()}/${isGym(contestId) ? `gym/${contestId}/problem` : `problemset/problem/${contestId}`}/${index}?locale=en`;
+export const submitUrl = (contestId, index) => `${origin()}/${isGym(contestId) ? 'gym' : 'contest'}/${contestId}/submit/${index}?locale=en`;
 export const submissionsUrl = (handle) => `${origin()}/submissions/${encodeURIComponent(handle)}?locale=en`;
-export const isProblemPage = (url) => /\/(problemset\/problem|contest\/\d+\/problem)\//.test(url || '');
+export const isProblemPage = (url) => /\/(problemset\/problem|(contest|gym)\/\d+\/problem)\//.test(url || '');
 
 // Runs inside the Codeforces page and reads the statement from the DOM that is already on screen.
 // (Refetching the page is not an option: Cloudflare may challenge a scripted request even when the page itself loaded.)
